@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "FreshmanRAG_bot"
+version = "2024.0.1"
+authors = [
+    {name = "Oleh Shkalikov", email = "Shkalikov.Oleh@gmail.com"},
+]
+description = "Ukrainian Telegram bot powered by Conditional RAG for first-year student"
+requires-python = ">=3.11"
+dependencies = [
+    "python-telegram-bot==21.4"
+]
+license = {file = "LICENSE"}
+readme = "README.md"
+
+[tool.setuptools.packages.find]
+where = ["."]
+namespaces = false
+
+[project.urls]
+Repository = "https://github.com/ShkalikovOleh/FreshmanRAG_bot"
+
+[project.optional-dependencies]
+dev = [
+]
+
+[tool.isort]
+profile = "black"
