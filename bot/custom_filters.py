@@ -1,6 +1,6 @@
 import telegram
-from telegram.ext.filters import UpdateFilter
 from telegram import Update
+from telegram.ext.filters import UpdateFilter
 
 
 class FilterIsPrivateChat(UpdateFilter):
