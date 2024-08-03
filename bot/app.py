@@ -6,8 +6,8 @@ from typing import Any
 
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 
-from bot.custom_filters import FilterIsPrivateChat
-from bot.rag_handlers import answer
+from bot.custom_filters import FilterIsPrivateChat, FilterRepliedTo
+from bot.rag_handlers import answer, answer_to_replied
 from bot.service_handlers import error, help, start, unknown
 from crag.graphs import get_graph
 
@@ -27,13 +27,16 @@ def load_config() -> dict[str, Any]:
 
 def prepare_rag_based_handlers(config: dict[str, Any]):
     graph = get_graph(config)
+
     answer_with_graph = partial(answer, graph=graph)
-    return answer_with_graph
+    answer_to_replied_with_graph = partial(answer_to_replied, graph=graph)
+
+    return answer_with_graph, answer_to_replied_with_graph
 
 
 if __name__ == "__main__":
     config = load_config()
-    answer_with_graph = prepare_rag_based_handlers(config)
+    answer_with_graph, answer_to_replied_with_graph = prepare_rag_based_handlers(config)
 
     tgbot_token = os.getenv("TGBOT_TOKEN")
     application = ApplicationBuilder().token(tgbot_token).build()
@@ -44,6 +47,10 @@ if __name__ == "__main__":
     help_handler = CommandHandler("help", help)
 
     answer_handler = CommandHandler("ans", answer_with_graph)
+    answer_to_replied_handler = CommandHandler(
+        "ans_rep", answer_to_replied_with_graph, filters=FilterRepliedTo()
+    )
+
     private_message_handler = MessageHandler(
         filters.TEXT & (~filters.COMMAND) & private_chat_filter, answer_with_graph
     )
@@ -53,6 +60,7 @@ if __name__ == "__main__":
     application.add_handler(start_handler)
     application.add_handler(help_handler)
     application.add_handler(answer_handler)
+    application.add_handler(answer_to_replied_handler)
     application.add_handler(private_message_handler)
     application.add_handler(unknown_handler)
 
