@@ -6,10 +6,6 @@ from telegram.ext import ContextTypes
 from bot.utils import docs_to_sources_str
 
 
-def make_html_link(url: str, name: str) -> str:
-    return f"<a href='{url}'>{name}</a>"
-
-
 async def infer_graph(graph: Runnable, question: str) -> str:
     response = await graph.ainvoke({"question": question})
     answer = response["generation"]

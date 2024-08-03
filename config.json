@@ -1,0 +1,13 @@
+{
+    "graph_type": "",
+    "llm_config": {
+        "llm_type": "",
+        "llm_args": {}
+    },
+    "retriever_config": {
+        "vector_store_type": "",
+        "vector_store_args": {},
+        "embeeddings_type": "",
+        "embeeddings_args": {}
+    }
+}
