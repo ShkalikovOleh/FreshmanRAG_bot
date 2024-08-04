@@ -4,12 +4,15 @@ import os
 from functools import partial
 from typing import Any
 
+from sqlalchemy.orm import sessionmaker
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 
-from bot.custom_filters import FilterIsPrivateChat, FilterRepliedTo
+from bot.db import get_db_sessionmaker
+from bot.management_handlers import add_fact, ban_user
 from bot.rag_handlers import answer, answer_to_replied
 from bot.service_handlers import error, help, start, unknown
 from crag.graphs import get_graph
+from crag.retrievers import get_vectorstore
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -25,35 +28,59 @@ def load_config() -> dict[str, Any]:
     return cfg
 
 
-def prepare_rag_based_handlers(config: dict[str, Any]):
+def prepare_rag_based_handlers(config: dict[str, Any], db_session: sessionmaker):
     graph = get_graph(config)
 
-    answer_with_graph = partial(answer, graph=graph)
-    answer_to_replied_with_graph = partial(answer_to_replied, graph=graph)
+    answer_with_graph = partial(answer, graph=graph, db_session=db_session)
+    answer_to_replied_with_graph = partial(
+        answer_to_replied, graph=graph, db_session=db_session
+    )
 
-    return answer_with_graph, answer_to_replied_with_graph
+    return {
+        "answer": answer_with_graph,
+        "answer_to_replied": answer_to_replied_with_graph,
+    }
+
+
+def prepare_management_handlers(config: dict[str, Any], db_session: sessionmaker):
+    store_type = config["retriever_config"]["vector_store_type"]
+    store_args = config["retriever_config"]["vector_store_args"]
+    vectorstore = get_vectorstore(store_type, None, **store_args)
+
+    handlers = {}
+    handlers["add_fact"] = partial(
+        add_fact, vector_store=vectorstore, db_session=db_session
+    )
+    handlers["ban_user"] = partial(ban_user, db_session=db_session)
+
+    return handlers
 
 
 if __name__ == "__main__":
     config = load_config()
-    answer_with_graph, answer_to_replied_with_graph = prepare_rag_based_handlers(config)
+    db_session = get_db_sessionmaker(config["db_connection"])
+    rag_handlers = prepare_rag_based_handlers(config, db_session)
+    manag_handlers = prepare_management_handlers(config, db_session)
 
     tgbot_token = os.getenv("TGBOT_TOKEN")
     application = ApplicationBuilder().token(tgbot_token).build()
 
-    private_chat_filter = FilterIsPrivateChat()
-
     start_handler = CommandHandler("start", start)
     help_handler = CommandHandler("help", help)
 
-    answer_handler = CommandHandler("ans", answer_with_graph)
+    answer_handler = CommandHandler("ans", rag_handlers["answer"])
     answer_to_replied_handler = CommandHandler(
-        "ans_rep", answer_to_replied_with_graph, filters=FilterRepliedTo()
+        "ans_rep", rag_handlers["answer_to_replied"], filters=filters.REPLY
     )
 
     private_message_handler = MessageHandler(
-        filters.TEXT & (~filters.COMMAND) & private_chat_filter, answer_with_graph
+        filters.TEXT & (~filters.COMMAND) & filters.ChatType.PRIVATE,
+        rag_handlers["answer"],
     )
+
+    add_fact_handler = CommandHandler("add", manag_handlers["add_fact"])
+    ban_handler = CommandHandler("ban", manag_handlers["ban_user"])
+    # unban_handler = CommandHandler("unban", manag_handlers["unban"])
 
     unknown_handler = MessageHandler(filters.COMMAND, unknown)
 
@@ -62,6 +89,9 @@ if __name__ == "__main__":
     application.add_handler(answer_handler)
     application.add_handler(answer_to_replied_handler)
     application.add_handler(private_message_handler)
+    application.add_handler(add_fact_handler)
+    application.add_handler(ban_handler)
+    # application.add_handler(unban_handler)
     application.add_handler(unknown_handler)
 
     application.add_error_handler(error)

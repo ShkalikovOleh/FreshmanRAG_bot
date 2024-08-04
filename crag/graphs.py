@@ -40,15 +40,17 @@ def simple_rag_graph(
     prompt = get_rag_prompt(config["llm_config"]["llm_type"])
     rag_chain = prompt | llm | StrOutputParser()
 
-    def retrieve(state):
+    async def retrieve(state):
         question = state["question"]
-        documents = retriever.invoke(question)
+        documents = await retriever.ainvoke(question)
         return {"documents": documents, "question": question}
 
-    def generate(state):
+    async def generate(state):
         question = state["question"]
         documents = state["documents"]
-        generation = rag_chain.invoke({"context": documents, "question": question})
+        generation = await rag_chain.ainvoke(
+            {"context": documents, "question": question}
+        )
         return {
             "documents": documents,
             "question": question,

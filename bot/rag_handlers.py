@@ -3,7 +3,7 @@ from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
-from bot.utils import docs_to_sources_str
+from bot.utils import docs_to_sources_str, filter_banned, with_db_session
 
 
 async def infer_graph(graph: Runnable, question: str) -> str:
@@ -13,12 +13,12 @@ async def infer_graph(graph: Runnable, question: str) -> str:
     return answer + sources_text
 
 
+@with_db_session()
+@filter_banned()
 async def answer(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-    graph: Runnable,
+    update: Update, context: ContextTypes.DEFAULT_TYPE, graph: Runnable, **kwargs
 ):
-    question = update.effective_message.text.removeprefix("/ans")
+    question = update.effective_message.text.removeprefix("/ans").strip()
     response = await infer_graph(graph, question)
 
     await context.bot.send_message(
@@ -29,12 +29,14 @@ async def answer(
     )
 
 
+@with_db_session()
+@filter_banned()
 async def answer_to_replied(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-    graph: Runnable,
+    update: Update, context: ContextTypes.DEFAULT_TYPE, graph: Runnable, **kwargs
 ):
-    question = update.effective_message.reply_to_message.text.removeprefix("/ans_rep")
+    question = update.effective_message.reply_to_message.text.removeprefix(
+        "/ans_rep"
+    ).strip()
     response = await infer_graph(graph, question)
 
     await context.bot.send_message(
