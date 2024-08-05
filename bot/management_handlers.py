@@ -1,5 +1,6 @@
 from langchain_core.documents import Document
 from langchain_core.vectorstores import VectorStore
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -42,31 +43,36 @@ async def add_fact(
     )
 
 
+async def get_user_id_from_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    banned_user_id = None
+    if len(context.args) == 1:
+        id = context.args[0]
+        if id.isdigit():
+            banned_user_id = int(id)
+    else:
+        reply = update.effective_message.reply_to_message
+        if reply is not None:
+            banned_user_id = reply.from_user.id
+
+    if banned_user_id is None:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            reply_to_message_id=update.effective_message.id,
+            text="Неправильний формат аргументів. Будь ласка, зазначте id "
+            "користувача або напишіть цю команду у відповідь на його повідомдення.",
+        )
+
+    return banned_user_id
+
+
 @with_db_session()
 @admin_only(should_can_add_admins=False, should_can_add_info=False)
 async def ban_user(
     update: Update, context: ContextTypes.DEFAULT_TYPE, db_session: AsyncSession
 ):
-    # determine user id
-    if len(context.args) == 1:
-        tag_or_id = context.args[0]
-        if tag_or_id.startswith("@"):
-            tg_user = await context.bot.get_chat(tag_or_id[1:])
-            banned_user_id = tg_user.id
-        else:
-            banned_user_id = tag_or_id
-    else:
-        reply = update.effective_message.reply_to_message
-        if reply is not None:
-            banned_user_id = reply.from_user.id
-        else:
-            await context.bot.send_message(
-                chat_id=update.effective_chat.id,
-                reply_to_message_id=update.effective_message.id,
-                text="Неправильний формат аргументів. Будь ласка, зазначте id або "
-                "@nick користувача або напишіть цю команду у відповідь на його "
-                "повідомдення.",
-            )
+    banned_user_id = await get_user_id_from_message(update, context)
+    if banned_user_id is None:
+        return
 
     # don't ban admins
     admin_id = update.effective_user.id
@@ -91,3 +97,24 @@ async def ban_user(
         reply_to_message_id=update.effective_message.id,
         text="Вказаного користувача було забанено!",
     )
+
+
+@with_db_session()
+@admin_only(should_can_add_admins=False, should_can_add_info=False)
+async def unban_user(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, db_session: AsyncSession
+):
+    banned_user_id = await get_user_id_from_message(update, context)
+    if banned_user_id is None:
+        return
+
+    stmt = delete(BannedUserOrChat).where(BannedUserOrChat.tg_id == banned_user_id)
+    result = await db_session.execute(stmt)
+    await db_session.commit()
+
+    if result.rowcount > 0:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            reply_to_message_id=update.effective_message.id,
+            text="Вказаного користувача було розбанено!",
+        )
