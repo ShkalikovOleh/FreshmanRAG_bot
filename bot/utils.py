@@ -1,5 +1,4 @@
 import json
-import os
 from typing import Any, List
 
 from langchain_core.documents import Document
@@ -41,8 +40,7 @@ def docs_to_sources_str(documents: List[Document]) -> str:
 
 
 def load_config() -> dict[str, Any]:
-    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    cfg_path = os.path.join(root_dir, "config.json")
+    cfg_path = "config.json"
     with open(cfg_path) as file:
         cfg = json.load(file)
 

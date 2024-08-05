@@ -27,4 +27,4 @@ RUN python -m pip install .
 RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
 
-CMD ["python", "bot/app.py"]
+CMD ["init_scripts/entry.sh"]

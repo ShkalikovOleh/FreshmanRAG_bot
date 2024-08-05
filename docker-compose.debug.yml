@@ -1,0 +1,46 @@
+version: '3.4'
+
+services:
+  freshmanragbot:
+    image: freshmanragbot
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command:
+      [
+        "sh",
+        "-c",
+        "pip install debugpy -t /tmp && python /tmp/debugpy --wait-for-client --listen 0.0.0.0:5678 bot/app.py "
+      ]
+    volumes:
+      - ${PWD}/.models/:/app/.models
+    networks:
+      - postgres-network
+    ports:
+      - 5678:5678
+  db:
+    image: pgvector/pgvector:pg16
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - postgres-network
+    volumes:
+      - ${PWD}/db-data/:/var/lib/postgresql/data/
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    ports:
+      - 15433:80
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - postgres-network
+    volumes:
+      - ${PWD}/pgadmin-data/:/var/lib/pgadmin/
+
+networks:
+  postgres-network:
+    driver: bridge
