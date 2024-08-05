@@ -174,3 +174,7 @@ data
 
 # Debug files
 *debug*
+
+# Env files
+.env
+local.env
