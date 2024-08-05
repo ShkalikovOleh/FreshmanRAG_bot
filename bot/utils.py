@@ -34,7 +34,7 @@ def docs_to_sources_str(documents: List[Document]) -> str:
         else:
             citation = title + f" від {author}:" + "\n\n" + doc.page_content + "\n"
 
-        idx = len(links)
+        idx = len(source_text_rows) + 1
         out_row = f"[{idx}] {citation}"
         source_text_rows.append(out_row)
 
