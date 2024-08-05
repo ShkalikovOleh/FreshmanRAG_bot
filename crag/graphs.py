@@ -32,6 +32,14 @@ class SimpleRagGraphState(TypedDict):
     question: str
     generation: str
     documents: List[Document]
+    do_generate: bool
+
+
+async def decide_to_generate(state):
+    if state["do_generate"]:
+        return "generate"
+    else:
+        return "stop"
 
 
 def simple_rag_graph(
@@ -42,12 +50,18 @@ def simple_rag_graph(
 
     async def retrieve(state):
         question = state["question"]
+        do_generate = state["do_generate"]
         documents = await retriever.ainvoke(question)
-        return {"documents": documents, "question": question}
+        return {
+            "documents": documents,
+            "question": question,
+            "do_generate": do_generate,
+        }
 
     async def generate(state):
         question = state["question"]
         documents = state["documents"]
+        do_generate = state["do_generate"]
         generation = await rag_chain.ainvoke(
             {"context": documents, "question": question}
         )
@@ -55,6 +69,7 @@ def simple_rag_graph(
             "documents": documents,
             "question": question,
             "generation": generation,
+            "do_generate": do_generate,
         }
 
     workflow = StateGraph(SimpleRagGraphState)
@@ -63,7 +78,14 @@ def simple_rag_graph(
     workflow.add_node("generate", generate)
 
     workflow.add_edge(START, "retrieve")
-    workflow.add_edge("retrieve", "generate")
+    workflow.add_conditional_edges(
+        "retrieve",
+        decide_to_generate,
+        {
+            "stop": END,
+            "generate": "generate",
+        },
+    )
     workflow.add_edge("generate", END)
 
     return workflow

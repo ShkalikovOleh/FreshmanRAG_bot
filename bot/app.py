@@ -15,7 +15,12 @@ from bot.management_handlers import (
     ban_user,
     unban_user,
 )
-from bot.rag_handlers import answer, answer_to_replied
+from bot.rag_handlers import (
+    answer,
+    answer_to_replied,
+    retieve_docs,
+    retieve_docs_to_replied,
+)
 from bot.service_handlers import error, help, start, unknown
 from crag.graphs import get_graph
 from crag.retrievers import get_vectorstore
@@ -41,10 +46,16 @@ def prepare_rag_based_handlers(config: dict[str, Any], db_session: sessionmaker)
     answer_to_replied_with_graph = partial(
         answer_to_replied, graph=graph, db_session=db_session
     )
+    retieve_docs_with_graph = partial(retieve_docs, graph=graph, db_session=db_session)
+    retieve_docs_to_replied_with_graph = partial(
+        retieve_docs_to_replied, graph=graph, db_session=db_session
+    )
 
     return {
         "answer": answer_with_graph,
         "answer_to_replied": answer_to_replied_with_graph,
+        "retieve": retieve_docs_with_graph,
+        "retieve_to_replied": retieve_docs_to_replied_with_graph,
     }
 
 
@@ -83,6 +94,10 @@ if __name__ == "__main__":
     answer_to_replied_handler = CommandHandler(
         "ans_rep", rag_handlers["answer_to_replied"], filters=filters.REPLY
     )
+    retieve_docs_handler = CommandHandler("docs", rag_handlers["retieve"])
+    retieve_docs_to_replied_handler = CommandHandler(
+        "docs_rep", rag_handlers["retieve_to_replied"], filters=filters.REPLY
+    )
 
     private_message_handler = MessageHandler(
         filters.TEXT & (~filters.COMMAND) & filters.ChatType.PRIVATE,
@@ -103,6 +118,8 @@ if __name__ == "__main__":
     application.add_handler(help_handler)
     application.add_handler(answer_handler)
     application.add_handler(answer_to_replied_handler)
+    application.add_handler(retieve_docs_handler)
+    application.add_handler(retieve_docs_to_replied_handler)
     application.add_handler(private_message_handler)
     application.add_handler(add_fact_handler)
     application.add_handler(add_source_for_fact_handler)
