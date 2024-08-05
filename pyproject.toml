@@ -10,22 +10,21 @@ authors = [
 ]
 description = "Ukrainian Telegram bot powered by Conditional RAG for first-year student"
 requires-python = ">=3.11"
-dependencies = [
-    "python-telegram-bot==21.4"
-]
 license = {file = "LICENSE"}
 readme = "README.md"
 
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"crag.prompt_templates" = ["*.txt"]
+
 [tool.setuptools.packages.find]
-where = ["."]
 namespaces = false
+where = ["."]
 
 [project.urls]
 Repository = "https://github.com/ShkalikovOleh/FreshmanRAG_bot"
-
-[project.optional-dependencies]
-dev = [
-]
 
 [tool.isort]
 profile = "black"

@@ -28,6 +28,7 @@ LICENSE
 README.md
 .flake8
 llms
-**/*.egg-info
+FreshmanRAG_bot.egg-info
 .models
 notebooks
+data

@@ -7,10 +7,14 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
+    depends_on:
+      - db
     networks:
       - postgres-network
     volumes:
       - ${PWD}/.models/:/app/.models
+    env_file:
+      - .env
   db:
     image: pgvector/pgvector:pg16
     restart: always
@@ -19,7 +23,7 @@ services:
     networks:
       - postgres-network
     volumes:
-      - ${PWD}/db-data/:/var/lib/postgresql/data/
+      - ${PWD}/data/db-data/:/var/lib/postgresql/data/
   pgadmin:
     image: dpage/pgadmin4
     restart: always
@@ -32,7 +36,7 @@ services:
     networks:
       - postgres-network
     volumes:
-      - ${PWD}/pgadmin-data/:/var/lib/pgadmin/
+      - ${PWD}/data/pgadmin-data/:/var/lib/pgadmin/
 
 networks:
   postgres-network:

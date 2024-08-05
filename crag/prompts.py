@@ -20,7 +20,10 @@ def get_docs_filtering_prompt(model_name: str) -> PromptTemplate:
 
 
 def get_gemma2_rag_prompt() -> PromptTemplate:
-    template_path = os.path.join("crag", "prompt_templates", "gemma2_rag.txt")
+    template_path = os.path.join(
+        os.path.dirname(__file__), "prompt_templates", "gemma2_rag.txt"
+    )
+
     with open(template_path) as f:
         template = f.read().strip()
 
