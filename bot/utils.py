@@ -15,21 +15,30 @@ def docs_to_sources_str(documents: List[Document]) -> str:
     links = set()
     source_text_rows = []
     for doc in documents:
-        link = doc.metadata["source"]
-        if link in links:
-            continue
-
-        links.add(link)
         title = doc.metadata["title"]
-        url_text = make_html_link(link, title)
+
+        if "is_public" in doc.metadata and not doc.metadata["is_public"]:
+            link = doc.metadata.get("public_source", None)
+        else:
+            link = doc.metadata["source"]
+
+        author = doc.metadata.get("author", None)
+
+        if link is not None:
+            if link in links:
+                continue
+            links.add(link)
+            citation = make_html_link(link, title)
+            if author is not None:
+                citation += f" від {author}"
+        else:
+            citation = title + f" від {author}:" + "\n\n" + doc.page_content + "\n"
 
         idx = len(links)
-        out_row = f"[{idx}] {url_text}"
+        out_row = f"[{idx}] {citation}"
         source_text_rows.append(out_row)
 
-    sources_text = "\n\nДжерела/найбільш релевантні посилання:\n" + "\n".join(
-        source_text_rows
-    )
+    sources_text = "\n".join(source_text_rows)
     return sources_text
 
 

@@ -10,7 +10,8 @@ async def infer_graph(graph: Runnable, question: str) -> str:
     response = await graph.ainvoke({"question": question})
     answer = response["generation"]
     sources_text = docs_to_sources_str(response["documents"])
-    return answer + sources_text
+    sources_preambule = "\n\nДжерела/найбільш релевантні посилання:\n"
+    return answer + sources_preambule + sources_text
 
 
 @with_db_session()

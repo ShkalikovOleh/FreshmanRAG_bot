@@ -1,6 +1,8 @@
+import json
+
 from langchain_core.documents import Document
 from langchain_core.vectorstores import VectorStore
-from sqlalchemy import delete
+from sqlalchemy import delete, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -20,27 +22,54 @@ async def add_fact(
     info = update.effective_message.text_html_urled.removeprefix("/add").strip()
 
     user_tag = update.effective_user.name
-    if user_tag is None:
-        user_tag = update.effective_user.full_name
     message_link = update.effective_message.link
     if message_link is None:
         message_link = ""
+        title = "Приватне повідомлення у ТG"
+    else:
+        title = "Повідомлення у групі TG"
 
     doc = Document(
         page_content=info,
         metadata={
             "source": message_link,
             "author": user_tag,
-            "title": f"Повідомлення у TG від {user_tag}",
+            "is_public": message_link != "",
+            "title": title,
         },
     )
-    await vector_store.aadd_documents([doc])
+    ids = await vector_store.aadd_documents([doc])
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         reply_to_message_id=update.effective_message.id,
-        text="Інформацію успішно додано до бази знань",
+        text=f"Інформацію успішно додано до бази знань з id: {ids[0]}",
     )
+
+
+@with_db_session()
+@admin_only(should_can_add_admins=False, should_can_add_info=True)
+async def add_public_source_to_fact(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, db_session: AsyncSession
+):
+    data_id = context.args[0]
+    source_link = context.args[1]
+
+    sql = """UPDATE langchain_pg_embedding
+        SET cmetadata=jsonb_set(cmetadata, '{public_source}', :source)
+        WHERE id::text=:data_id"""
+
+    result = await db_session.execute(
+        text(sql), {"data_id": data_id, "source": json.dumps(source_link)}
+    )
+    await db_session.commit()
+
+    if result.rowcount > 0:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            reply_to_message_id=update.effective_message.id,
+            text="Посилання на публічне джерело додано до запису у базі знань.",
+        )
 
 
 async def get_user_id_from_message(
@@ -138,6 +167,9 @@ async def add_admin(
         # new admin from replied
         can_add_admin = context.args[0] in true_options
         can_add_info = context.args[1] in true_options
+        nick = update.effective_message.reply_to_message.from_user.username
+        if nick is not None:
+            tg_tag = "@" + nick
     elif len(context.args) == 3:
         # new admin from id
         can_add_admin = context.args[1] in true_options

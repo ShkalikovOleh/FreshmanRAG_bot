@@ -8,7 +8,13 @@ from sqlalchemy.orm import sessionmaker
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 
 from bot.db import get_db_sessionmaker
-from bot.management_handlers import add_admin, add_fact, ban_user, unban_user
+from bot.management_handlers import (
+    add_admin,
+    add_fact,
+    add_public_source_to_fact,
+    ban_user,
+    unban_user,
+)
 from bot.rag_handlers import answer, answer_to_replied
 from bot.service_handlers import error, help, start, unknown
 from crag.graphs import get_graph
@@ -54,6 +60,9 @@ def prepare_management_handlers(config: dict[str, Any], db_session: sessionmaker
     handlers["ban_user"] = partial(ban_user, db_session=db_session)
     handlers["unban_user"] = partial(unban_user, db_session=db_session)
     handlers["add_admin"] = partial(add_admin, db_session=db_session)
+    handlers["add_source_for_fact"] = partial(
+        add_public_source_to_fact, db_session=db_session
+    )
 
     return handlers
 
@@ -81,6 +90,9 @@ if __name__ == "__main__":
     )
 
     add_fact_handler = CommandHandler("add", manag_handlers["add_fact"])
+    add_source_for_fact_handler = CommandHandler(
+        "add_source", manag_handlers["add_source_for_fact"]
+    )
     ban_handler = CommandHandler("ban", manag_handlers["ban_user"])
     unban_handler = CommandHandler("unban", manag_handlers["unban_user"])
     add_admin_handler = CommandHandler("add_admin", manag_handlers["add_admin"])
@@ -93,6 +105,7 @@ if __name__ == "__main__":
     application.add_handler(answer_to_replied_handler)
     application.add_handler(private_message_handler)
     application.add_handler(add_fact_handler)
+    application.add_handler(add_source_for_fact_handler)
     application.add_handler(ban_handler)
     application.add_handler(unban_handler)
     application.add_handler(add_admin_handler)
