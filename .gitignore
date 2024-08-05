@@ -171,3 +171,6 @@ notebooks
 
 # Docker volumes
 data
+
+# Debug files
+*debug*
