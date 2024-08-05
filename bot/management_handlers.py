@@ -10,7 +10,7 @@ from bot.utils import admin_only, with_db_session
 
 
 @with_db_session()
-@admin_only(should_can_add_admins=False)
+@admin_only(should_can_add_admins=False, should_can_add_info=True)
 async def add_fact(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
@@ -43,9 +43,11 @@ async def add_fact(
     )
 
 
-async def get_user_id_from_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def get_user_id_from_message(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, max_args: int = 1
+):
     banned_user_id = None
-    if len(context.args) == 1:
+    if 1 <= len(context.args) <= max_args:
         id = context.args[0]
         if id.isdigit():
             banned_user_id = int(id)
@@ -118,3 +120,46 @@ async def unban_user(
             reply_to_message_id=update.effective_message.id,
             text="Вказаного користувача було розбанено!",
         )
+
+
+@with_db_session()
+@admin_only(should_can_add_admins=True, should_can_add_info=False)
+async def add_admin(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, db_session: AsyncSession
+):
+    new_admin_id = await get_user_id_from_message(update, context, 3)
+    if new_admin_id is None:
+        return
+
+    true_options = ["true", "1", "t", "y", "yes"]
+
+    tg_tag = None
+    if update.effective_message.reply_to_message is not None and len(context.args) == 2:
+        # new admin from replied
+        can_add_admin = context.args[0] in true_options
+        can_add_info = context.args[1] in true_options
+    elif len(context.args) == 3:
+        # new admin from id
+        can_add_admin = context.args[1] in true_options
+        can_add_info = context.args[2] in true_options
+    else:
+        # default params
+        can_add_admin = True
+        can_add_info = True
+
+    curr_admin_id = update.effective_user.id
+    new_admin = Admin(
+        tg_id=new_admin_id,
+        tg_tag=tg_tag,
+        can_add_info=can_add_info,
+        can_add_new_admins=can_add_admin,
+        added_by_id=curr_admin_id,
+    )
+    db_session.add(new_admin)
+    await db_session.commit()
+
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        reply_to_message_id=update.effective_message.id,
+        text="Вказаного користувача було додано до списку адмінів!",
+    )
