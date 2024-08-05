@@ -4,7 +4,7 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.vectorstores import VectorStore
 
-from bot.utils import cache_once
+from bot.decorators import cache_once
 
 
 def get_retriever(retriever_config: dict[str, Any]) -> BaseRetriever:

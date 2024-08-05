@@ -8,7 +8,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from bot.db import Admin, BannedUserOrChat
-from bot.utils import admin_only, with_db_session
+from bot.decorators import admin_only, with_db_session
 
 
 @with_db_session()

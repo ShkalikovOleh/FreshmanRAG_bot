@@ -3,7 +3,8 @@ from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
-from bot.utils import docs_to_sources_str, filter_banned, with_db_session
+from bot.decorators import filter_banned, with_db_session
+from bot.utils import docs_to_sources_str
 
 
 async def infer_graph(graph: Runnable, question: str, only_docs: bool = False) -> str:

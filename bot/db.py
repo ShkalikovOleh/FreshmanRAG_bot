@@ -48,9 +48,4 @@ class BannedUserOrChat(Base):
 @lru_cache(maxsize=1)
 def get_db_sessionmaker(conn_string: str) -> sessionmaker:
     engine = create_async_engine(conn_string)
-
-    from sqlalchemy import create_engine
-
-    Base.metadata.create_all(create_engine(conn_string))
-
     return sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)

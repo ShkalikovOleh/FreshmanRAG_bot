@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 from functools import partial
@@ -8,35 +7,27 @@ from sqlalchemy.orm import sessionmaker
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 
 from bot.db import get_db_sessionmaker
-from bot.management_handlers import (
+from bot.handlers.management import (
     add_admin,
     add_fact,
     add_public_source_to_fact,
     ban_user,
     unban_user,
 )
-from bot.rag_handlers import (
+from bot.handlers.rag import (
     answer,
     answer_to_replied,
     retieve_docs,
     retieve_docs_to_replied,
 )
-from bot.service_handlers import error, help, start, unknown
+from bot.handlers.service import error, help, start, unknown
+from bot.utils import load_config
 from crag.graphs import get_graph
 from crag.retrievers import get_vectorstore
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
-
-
-def load_config() -> dict[str, Any]:
-    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    cfg_path = os.path.join(root_dir, "config.json")
-    with open(cfg_path) as file:
-        cfg = json.load(file)
-
-    return cfg
 
 
 def prepare_rag_based_handlers(config: dict[str, Any], db_session: sessionmaker):
