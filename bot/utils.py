@@ -48,7 +48,7 @@ def recursive_substitute_envs(cfg: dict[str, Any]) -> None:
         elif isinstance(v, str):
             prev_end = 0
             new_value = ""
-            for match in re.finditer("{env.\w+}", v):
+            for match in re.finditer("{env.\w+}", v):  # noqa
                 env_name = match.group()[5:-1]
                 new_value += v[prev_end : match.start()] + os.getenv(env_name)
                 prev_end = match.end()
