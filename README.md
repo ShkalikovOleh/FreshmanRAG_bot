@@ -20,7 +20,7 @@ Currently 3 different RAG pipelines are implemented. By default the bot uses the
 All pipelines support the ability to return only documents relevant to a question without LLM answer generation, it is implemented as a conditional edge which is depicted as `stop` on all diagrams below.
 
 #### Simple RAG
-The `Simple RAG` pipeline that uses the Sentence-BERT model (by default [*lang-uk/ukr-paraphrase-multilingual-mpnet-base*](lang-uk/ukr-paraphrase-multilingual-mpnet-base)) to extract embeddings and vector store (by default `pgvector`) to find the nearest documents from the knowledge base and then optionally use the retrieved information for generation.
+The `Simple RAG` pipeline that uses the Sentence-BERT model (by default [*lang-uk/ukr-paraphrase-multilingual-mpnet-base*](https://huggingface.co/lang-uk/ukr-paraphrase-multilingual-mpnet-base)) to extract embeddings and vector store (by default `pgvector`) to find the nearest documents from the knowledge base and then optionally use the retrieved information for generation.
 
 ![Simple RAG](assets/simple_rag.png)
 
