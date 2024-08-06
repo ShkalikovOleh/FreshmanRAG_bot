@@ -11,10 +11,13 @@ async def infer_graph(graph: Runnable, question: str, only_docs: bool = False) -
     response = await graph.ainvoke({"question": question, "do_generate": not only_docs})
     answer = response.get("generation", "")
 
-    sources_text = docs_to_sources_str(response["documents"])
-    sources_preambule = "\n\nДжерела/найбільш релевантні посилання:\n"
-
-    return answer + sources_preambule + sources_text
+    docs = response["documents"]
+    if len(docs) > 0:
+        sources_text = docs_to_sources_str(docs)
+        sources_preambule = "\n\nДжерела/найбільш релевантні посилання:\n"
+        return answer + sources_preambule + sources_text
+    else:
+        return answer
 
 
 @with_db_session()
