@@ -9,7 +9,11 @@ from langgraph.graph import END, START, StateGraph
 from typing_extensions import TypedDict
 
 from crag.llms import get_llm
-from crag.prompts import get_docs_filtering_prompt, get_rag_prompt
+from crag.prompts import (
+    get_docs_filtering_prompt,
+    get_question_rewriting_prompt,
+    get_rag_prompt,
+)
 from crag.retrievers import get_retriever
 
 
@@ -23,6 +27,8 @@ def get_graph(config: dict[str, Any]) -> Runnable:
             graph = simple_rag_graph(llm, retriever, config)
         case "simple_rag_with_docs_filtering":
             graph = simple_rag_with_docs_filtering(llm, retriever, config)
+        case "rag_with_question_rewriting":
+            graph = rag_with_question_rewriting(llm, retriever, config)
         case _:
             raise ValueError("Unsupported graph type")
 
@@ -35,22 +41,7 @@ class SimpleRagGraphState(TypedDict):
     generation: str
     documents: List[Document]
     do_generate: bool
-
-
-async def decide_to_generate(state):
-    if state["do_generate"]:
-        return "generate"
-    else:
-        return "stop"
-
-
-async def decide_to_generate_with_filtering(state):
-    if len(state["documents"]) == 0:
-        return "giveup"
-    elif state["do_generate"]:
-        return "generate"
-    else:
-        return "stop"
+    failed: bool = False
 
 
 async def giveup(state):
@@ -58,10 +49,10 @@ async def giveup(state):
 
     response = (
         "Вибачте, на жаль я не можу знайти жодного релевантного документа, "
-        "який стосується вашого запиту"
+        "який стосується вашого запиту (:"
     )
 
-    return {"question": question, "generation": response}
+    return {"question": question, "generation": response, "failed": True}
 
 
 def documents_to_context_str(docs: List[Document]):
@@ -76,13 +67,11 @@ def simple_rag_graph(
 
     async def retrieve(state):
         question = state["question"]
-        do_generate = state["do_generate"]
+
         documents = await retriever.ainvoke(question)
-        return {
-            "documents": documents,
-            "question": question,
-            "do_generate": do_generate,
-        }
+
+        state["documents"] = documents
+        return state
 
     async def generate(state):
         question = state["question"]
@@ -91,11 +80,14 @@ def simple_rag_graph(
         context = documents_to_context_str(documents)
         generation = await rag_chain.ainvoke({"context": context, "question": question})
 
-        return {
-            "documents": documents,
-            "question": question,
-            "generation": generation,
-        }
+        state["generation"] = generation
+        return state
+
+    async def decide_to_generate(state):
+        if state["do_generate"]:
+            return "generate"
+        else:
+            return "stop"
 
     workflow = StateGraph(SimpleRagGraphState)
 
@@ -129,13 +121,11 @@ def simple_rag_with_docs_filtering(
 
     async def retrieve(state):
         question = state["question"]
-        do_generate = state["do_generate"]
+
         documents = await retriever.ainvoke(question)
-        return {
-            "documents": documents,
-            "question": question,
-            "do_generate": do_generate,
-        }
+
+        state["documents"] = documents
+        return state
 
     async def generate(state):
         question = state["question"]
@@ -144,16 +134,12 @@ def simple_rag_with_docs_filtering(
         context = documents_to_context_str(documents)
         generation = await rag_chain.ainvoke({"context": context, "question": question})
 
-        return {
-            "documents": documents,
-            "question": question,
-            "generation": generation,
-        }
+        state["generation"] = generation
+        return state
 
     async def grade_documents(state):
         question = state["question"]
         documents = state["documents"]
-        do_generate = state["do_generate"]
 
         relevant_docs = []
         for doc in documents:
@@ -163,11 +149,16 @@ def simple_rag_with_docs_filtering(
             if result["score"]:
                 relevant_docs.append(doc)
 
-        return {
-            "documents": relevant_docs,
-            "question": question,
-            "do_generate": do_generate,
-        }
+        state["documents"] = relevant_docs
+        return state
+
+    async def decide_to_generate_with_filtering(state):
+        if len(state["documents"]) == 0:
+            return "giveup"
+        elif state["do_generate"]:
+            return "generate"
+        else:
+            return "stop"
 
     workflow = StateGraph(SimpleRagGraphState)
 
@@ -184,6 +175,105 @@ def simple_rag_with_docs_filtering(
         {
             "giveup": "giveup",
             "generate": "generate",
+            "stop": END,
+        },
+    )
+    workflow.add_edge("giveup", END)
+    workflow.add_edge("generate", END)
+
+    return workflow
+
+
+class RagWithRewritingChain(SimpleRagGraphState):
+    remaining_rewrites: int
+
+
+# flake8: noqa: C901
+def rag_with_question_rewriting(
+    llm: BaseLanguageModel, retriever: BaseRetriever, config: dict[str, Any]
+) -> StateGraph:
+    llm_type = config["llm_config"]["llm_type"]
+
+    rag_prompt = get_rag_prompt(llm_type)
+    rag_chain = rag_prompt | llm | StrOutputParser()
+
+    filtering_prompt = get_docs_filtering_prompt(llm_type)
+    filter_chain = filtering_prompt | llm | JsonOutputParser()
+
+    rewrite_prompt = get_question_rewriting_prompt(llm_type)
+    rewrite_chain = rewrite_prompt | llm | StrOutputParser()
+
+    async def retrieve(state):
+        question = state["question"]
+
+        documents = await retriever.ainvoke(question)
+
+        state["documents"] = documents
+        return state
+
+    async def generate(state):
+        question = state["question"]
+        documents = state["documents"]
+
+        context = documents_to_context_str(documents)
+        generation = await rag_chain.ainvoke({"context": context, "question": question})
+
+        state["generation"] = generation
+        return state
+
+    async def rewrite(state):
+        question = state["question"]
+
+        generation = await rewrite_chain.ainvoke({"question": question})
+
+        state["remaining_rewrites"] -= 1
+        state["question"] = generation
+        return state
+
+    async def grade_documents(state):
+        question = state["question"]
+        documents = state["documents"]
+
+        relevant_docs = []
+        for doc in documents:
+            result = await filter_chain.ainvoke(
+                {"document": doc.page_content, "question": question}
+            )
+            if result["score"]:
+                relevant_docs.append(doc)
+
+        state["documents"] = relevant_docs
+        return state
+
+    async def decide_to_generate_with_filtering_and_rewriting(state):
+        if len(state["documents"]) == 0:
+            if state["remaining_rewrites"] > 0:
+                return "rewrite"
+            else:
+                return "giveup"
+        elif state["do_generate"]:
+            return "generate"
+        else:
+            return "stop"
+
+    workflow = StateGraph(RagWithRewritingChain)
+
+    workflow.add_node("retrieve", retrieve)
+    workflow.add_node("grade_documents", grade_documents)
+    workflow.add_node("rewrite", rewrite)
+    workflow.add_node("giveup", giveup)
+    workflow.add_node("generate", generate)
+
+    workflow.add_edge(START, "retrieve")
+    workflow.add_edge("rewrite", "retrieve")
+    workflow.add_edge("retrieve", "grade_documents")
+    workflow.add_conditional_edges(
+        "grade_documents",
+        decide_to_generate_with_filtering_and_rewriting,
+        {
+            "giveup": "giveup",
+            "generate": "generate",
+            "rewrite": "rewrite",
             "stop": END,
         },
     )

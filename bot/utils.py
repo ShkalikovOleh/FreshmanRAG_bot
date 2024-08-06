@@ -10,6 +10,10 @@ def make_html_link(url: str, name: str) -> str:
     return f"<a href='{url}'>{name}</a>"
 
 
+def make_html_quote(text: str) -> str:
+    return f"<blockquote>{text}</blockquote>"
+
+
 def docs_to_sources_str(documents: List[Document]) -> str:
     links = set()
     source_text_rows = []

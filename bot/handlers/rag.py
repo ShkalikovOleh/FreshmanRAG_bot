@@ -4,20 +4,36 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 from bot.decorators import filter_banned, with_db_session
-from bot.utils import docs_to_sources_str
+from bot.utils import docs_to_sources_str, make_html_quote
 
 
 async def infer_graph(graph: Runnable, question: str, only_docs: bool = False) -> str:
-    response = await graph.ainvoke({"question": question, "do_generate": not only_docs})
-    answer = response.get("generation", "")
+    response = await graph.ainvoke(
+        {
+            "question": question,
+            "do_generate": not only_docs,
+            "failed": False,
+            "remaining_rewrites": 1,
+        }
+    )
+    output = ""
+
+    actual_question = response["question"]
+    if not response["failed"] and question != actual_question:
+        output += "Змінено питання/запит на:\n"
+        output += make_html_quote(actual_question)
+
+    answer = response.get("generation")
+    if answer is not None:
+        output += answer
 
     docs = response["documents"]
     if len(docs) > 0:
         sources_text = docs_to_sources_str(docs)
         sources_preambule = "\n\nДжерела/найбільш релевантні посилання:\n"
-        return answer + sources_preambule + sources_text
-    else:
-        return answer
+        output += sources_preambule + sources_text
+
+    return output
 
 
 @with_db_session()

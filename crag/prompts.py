@@ -14,7 +14,15 @@ def get_rag_prompt(model_name: str) -> PromptTemplate:
 def get_docs_filtering_prompt(model_name: str) -> PromptTemplate:
     match model_name:
         case "gemma2_llama_cpp":
-            return get_gemma_docs_filtering_prompt()
+            return get_gemma2_docs_filtering_prompt()
+        case _:
+            raise ValueError("Unsupported model type")
+
+
+def get_question_rewriting_prompt(model_name: str) -> PromptTemplate:
+    match model_name:
+        case "gemma2_llama_cpp":
+            return get_gemma2_question_rewriting_prompt()
         case _:
             raise ValueError("Unsupported model type")
 
@@ -34,8 +42,15 @@ def get_gemma2_rag_prompt() -> PromptTemplate:
     return read_prompt_from_file(template_path)
 
 
-def get_gemma_docs_filtering_prompt() -> PromptTemplate:
+def get_gemma2_docs_filtering_prompt() -> PromptTemplate:
     template_path = os.path.join(
         os.path.dirname(__file__), "prompt_templates", "gemma2_docs_filtering.txt"
+    )
+    return read_prompt_from_file(template_path)
+
+
+def get_gemma2_question_rewriting_prompt() -> PromptTemplate:
+    template_path = os.path.join(
+        os.path.dirname(__file__), "prompt_templates", "gemma2_question_rewriting.txt"
     )
     return read_prompt_from_file(template_path)

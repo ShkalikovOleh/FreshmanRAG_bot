@@ -5,6 +5,5 @@
 Запитання: {question}
 
 Контекст: {context}<end_of_turn>
-
 <start_of_turn>model
 Відповідь:

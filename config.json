@@ -1,5 +1,5 @@
 {
-    "graph_type": "simple_rag_with_docs_filtering",
+    "graph_type": "rag_with_question_rewriting",
     "db_connection": "postgresql+psycopg://{env:POSTGRES_USER}:{env:POSTGRES_PASSWORD}@{env.POSTGRES_HOST}:5432/{env.POSTGRES_DB}",
     "llm_config": {
         "llm_type": "gemma2_llama_cpp",
