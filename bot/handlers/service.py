@@ -13,7 +13,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
-        chat_id=update.effective_chat.id, text="У розробці :)"
+        chat_id=update.effective_chat.id,
+        text=(
+            "Цей бот підтримує наступні користувацькі команди:\n\n"
+            "/start - Показати опис бота\n"
+            "/help - Показати доступні команди\n"
+            "/ans - Відповісти на питання\n"
+            "/ans_rep - Відповісти на питання з replied повідомлення\n"
+            "/docs - Надати релевантні посилання\n"
+            "/docs_rep - Надати релевантні посилання для replied повідомлення"
+        ),
     )
 
 
