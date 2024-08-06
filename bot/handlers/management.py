@@ -9,6 +9,7 @@ from telegram.ext import ContextTypes
 
 from bot.db import Admin, BannedUserOrChat
 from bot.decorators import admin_only, with_db_session
+from bot.utils import remove_bot_command
 
 
 @with_db_session()
@@ -19,7 +20,16 @@ async def add_fact(
     vector_store: VectorStore,
     **kwargs,
 ):
-    info = update.effective_message.text_html_urled.removeprefix("/add").strip()
+    info = remove_bot_command(
+        update.effective_message.text_html_urled, "add", context.bot.name
+    )
+    if len(info) == 0:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            reply_to_message_id=update.effective_message.id,
+            text="Ви не надали жодної інформації.",
+        )
+        return
 
     user_tag = update.effective_user.name
     message_link = update.effective_message.link

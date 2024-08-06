@@ -45,6 +45,10 @@ def docs_to_sources_str(documents: List[Document]) -> str:
     return sources_text
 
 
+def remove_bot_command(message: str, command: str, bot_name: str):
+    return message.removeprefix(f"/{command}").removeprefix(bot_name).strip()
+
+
 def recursive_substitute_envs(cfg: dict[str, Any]) -> None:
     for k, v in cfg.items():
         if isinstance(v, dict):

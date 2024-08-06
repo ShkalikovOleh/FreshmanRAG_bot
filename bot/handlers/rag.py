@@ -4,7 +4,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 from bot.decorators import filter_banned, with_db_session
-from bot.utils import docs_to_sources_str, make_html_quote
+from bot.utils import docs_to_sources_str, make_html_quote, remove_bot_command
 
 
 async def infer_graph(graph: Runnable, question: str, only_docs: bool = False) -> str:
@@ -41,7 +41,18 @@ async def infer_graph(graph: Runnable, question: str, only_docs: bool = False) -
 async def answer(
     update: Update, context: ContextTypes.DEFAULT_TYPE, graph: Runnable, **kwargs
 ):
-    question = update.effective_message.text.removeprefix("/ans").strip()
+    question = remove_bot_command(
+        update.effective_message.text, "ans", context.bot.name
+    )
+
+    if len(question) == 0:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            reply_to_message_id=update.effective_message.id,
+            text="Ви не задали питання.",
+        )
+        return
+
     response = await infer_graph(graph, question)
 
     await context.bot.send_message(
@@ -57,9 +68,18 @@ async def answer(
 async def answer_to_replied(
     update: Update, context: ContextTypes.DEFAULT_TYPE, graph: Runnable, **kwargs
 ):
-    question = update.effective_message.reply_to_message.text.removeprefix(
-        "/ans_rep"
-    ).strip()
+    question = remove_bot_command(
+        update.effective_message.reply_to_message.text, "ans_rep", context.bot.name
+    )
+
+    if len(question) == 0:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            reply_to_message_id=update.effective_message.reply_to_message.id,
+            text="Ви не задали питання.",
+        )
+        return
+
     response = await infer_graph(graph, question)
 
     await context.bot.send_message(
@@ -75,7 +95,18 @@ async def answer_to_replied(
 async def retieve_docs(
     update: Update, context: ContextTypes.DEFAULT_TYPE, graph: Runnable, **kwargs
 ):
-    question = update.effective_message.text.removeprefix("/docs").strip()
+    question = remove_bot_command(
+        update.effective_message.text, "docs", context.bot.name
+    )
+
+    if len(question) == 0:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            reply_to_message_id=update.effective_message.id,
+            text="Ви не задали питання.",
+        )
+        return
+
     response = await infer_graph(graph, question, only_docs=True)
 
     await context.bot.send_message(
@@ -91,9 +122,18 @@ async def retieve_docs(
 async def retieve_docs_to_replied(
     update: Update, context: ContextTypes.DEFAULT_TYPE, graph: Runnable, **kwargs
 ):
-    question = update.effective_message.reply_to_message.text.removeprefix(
-        "/docs_rep"
-    ).strip()
+    question = remove_bot_command(
+        update.effective_message.reply_to_message.text, "docs_rep", context.bot.name
+    )
+
+    if len(question) == 0:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            reply_to_message_id=update.effective_message.reply_to_message.id,
+            text="Ви не задали питання.",
+        )
+        return
+
     response = await infer_graph(graph, question, only_docs=True)
 
     await context.bot.send_message(
