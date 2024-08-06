@@ -57,7 +57,7 @@ def recursive_substitute_envs(cfg: dict[str, Any]) -> None:
 
 
 def load_config() -> dict[str, Any]:
-    cfg_path = "config.json"
+    cfg_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config.json")
     with open(cfg_path) as file:
         cfg = json.load(file)
 
