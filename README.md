@@ -1,7 +1,7 @@
 # FreshmanRAG_bot
 Ukrainian Telegram bot assistant for freshmen based on RAG with LLM.
 
-Very often, first-year students have a lot of questions. But, unfortunately, they flatly refuse to read the pinned messages and guides. This forces us, those who help them, to answer the same questions many times. This bot aims to make the life of volunteers easier and provide answers or relevant links to the question to itself.
+Very often, first-year students have a lot of questions. But, unfortunately, they flatly refuse to read the pinned messages and guides. This forces us, those who help them, to answer the same questions many times. This bot aims to make the life of volunteers easier by independently providing answers or relevant links to common questions.
 
 ## Bot functionality
 
@@ -35,7 +35,7 @@ The `Conditional RAG with document filtering pipeline` doesn’t give up immedia
 ![Conditional RAG with question rewriting](assets/rag_with_question_rewriting.png)
 
 ## LLMs
-This bot is currently using Gemma2-2B-it as an LLM. This is due to the fact that I do not have the money to host large models, let alone one on nodes with GPU. At the same time, even the smallest LLaMa-3.1-8b quantised into 4 bits takes 1 minute to run with llama.cpp. So I decided to use the new Gemma2-2B-it, which, according to the authors, is the best model in this size, and most importantly, more or less understands Ukrainian.
+This bot is currently using Gemma2-2B-it (Q5-K quantized) as an LLM. This is due to the fact that I do not have the money to host large models, let alone one on nodes with GPU. At the same time, even the smallest LLaMa-3.1-8b quantised into 4 bits takes 1 minute to run with llama.cpp. So I decided to use the new Gemma2-2B-it, which, according to the authors, is the best model in this size, and most importantly, more or less understands Ukrainian.
 
 If I have time, I plan to fine-tune Gemma2-2B-it for better understanding of Ukrainian (including expanding the tokenizer dictionary) and especially for RAG. You will find corresponding training script in the `llms` directory.
 
