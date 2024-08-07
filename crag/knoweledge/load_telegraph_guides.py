@@ -4,6 +4,7 @@ from typing import List
 
 import requests
 from bs4 import BeautifulSoup
+from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.documents import Document
 from langchain_text_splitters import HTMLSectionSplitter, RecursiveCharacterTextSplitter
 
@@ -11,11 +12,16 @@ from bot.utils import load_config
 from crag.retrievers import get_embeddings, get_vectorstore
 
 
-def load_telegraph_guides(urls: List[str]):
-    html_docs = load_urls(urls)
-    headers = split_headers(html_docs)
-    filtered_headers = filter_telegram_header_splits(headers)
-    docs = split_into_chunks(filtered_headers)
+def load_telegraph_guides(urls: List[str], split_headers: bool = True):
+    if split_headers:
+        html_docs = load_urls(urls)
+        headers = split_headers(html_docs)
+        docs = filter_telegram_header_splits(headers)
+    else:
+        docs_list = [WebBaseLoader(url).load() for url in urls]
+        docs = [item for sublist in docs_list for item in sublist]
+
+    docs = split_into_chunks(docs)
     return docs
 
 
@@ -80,7 +86,7 @@ def split_into_chunks(docs: List[Document]) -> List[Document]:
 async def main(cfg: argparse.Namespace) -> None:
     with open(cfg.urls) as f:
         urls = [line.strip() for line in f.readlines()]
-        docs = load_telegraph_guides(urls)
+        docs = load_telegraph_guides(urls, cfg.split_headers)
 
         config = load_config()
 
@@ -98,6 +104,12 @@ async def main(cfg: argparse.Namespace) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Adds given telegraph guides to the knoweledge base"
+    )
+    parser.add_argument(
+        "--split-headers",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Whether split guides by header",
     )
     parser.add_argument("--urls", type=str, help="File with links to guides")
 
