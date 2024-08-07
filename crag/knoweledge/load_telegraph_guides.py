@@ -12,7 +12,7 @@ from bot.utils import load_config
 from crag.retrievers import get_embeddings, get_vectorstore
 
 
-def load_telegraph_guides(urls: List[str], split_headers: bool = True):
+def load_telegraph_guides(urls: List[str], split_headers: bool = False):
     if split_headers:
         html_docs = load_urls(urls)
         headers = split_headers(html_docs)
@@ -77,7 +77,7 @@ def filter_telegram_header_splits(html_header_splits: List[Document]) -> List[Do
 
 def split_into_chunks(docs: List[Document]) -> List[Document]:
     text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-        chunk_size=500, chunk_overlap=50
+        chunk_size=500, chunk_overlap=25
     )
     chunked_docs = text_splitter.split_documents(docs)
     return chunked_docs

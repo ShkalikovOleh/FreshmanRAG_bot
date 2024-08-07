@@ -10,6 +10,7 @@ from telegram.ext import ContextTypes
 from bot.db import Admin, BannedUserOrChat
 from bot.decorators import admin_only, with_db_session
 from bot.utils import remove_bot_command
+from crag.knoweledge.load_telegraph_guides import load_telegraph_guides
 
 
 @with_db_session()
@@ -21,7 +22,7 @@ async def add_fact(
     **kwargs,
 ):
     info = remove_bot_command(
-        update.effective_message.text_html_urled, "add", context.bot.name
+        update.effective_message.text, "add", context.bot.name
     )
     if len(info) == 0:
         await context.bot.send_message(
@@ -54,6 +55,80 @@ async def add_fact(
         chat_id=update.effective_chat.id,
         reply_to_message_id=update.effective_message.id,
         text=f"Інформацію успішно додано до бази знань з id: {ids[0]}",
+    )
+
+
+@with_db_session()
+@admin_only(should_can_add_admins=False, should_can_add_info=True)
+async def add_fact_from_replied(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    vector_store: VectorStore,
+    **kwargs,
+):
+    info = remove_bot_command(
+        update.effective_message.reply_to_message.text,
+        "add_rep",
+        context.bot.name,
+    )
+    if len(info) == 0:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            reply_to_message_id=update.effective_message.id,
+            text="Ви не надали жодної інформації.",
+        )
+        return
+
+    user_tag = update.effective_message.reply_to_message.from_user.name
+    message_link = update.effective_message.reply_to_message.link
+    if message_link is None:
+        message_link = ""
+        title = "Приватне повідомлення у ТG"
+    else:
+        title = "Повідомлення у групі TG"
+
+    doc = Document(
+        page_content=info,
+        metadata={
+            "source": message_link,
+            "author": user_tag,
+            "is_public": message_link != "",
+            "title": title,
+        },
+    )
+    ids = await vector_store.aadd_documents([doc])
+
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        reply_to_message_id=update.effective_message.id,
+        text=f"Інформацію успішно додано до бази знань з id: {ids[0]}",
+    )
+
+
+@with_db_session()
+@admin_only(should_can_add_admins=False, should_can_add_info=True)
+async def add_facts_from_link(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    vector_store: VectorStore,
+    **kwargs,
+):
+    if len(context.args) != 1:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            reply_to_message_id=update.effective_message.id,
+            text="Ви повинні надати посилання!",
+        )
+        return
+
+    url = context.args[0]
+    docs = load_telegraph_guides([url], False)
+    await vector_store.aadd_documents(docs)
+
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        reply_to_message_id=update.effective_message.id,
+        text="Інформацію успішно додано до бази знань.",
     )
 
 

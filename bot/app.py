@@ -10,6 +10,8 @@ from bot.db import get_db_sessionmaker
 from bot.handlers.management import (
     add_admin,
     add_fact,
+    add_fact_from_replied,
+    add_facts_from_link,
     add_public_source_to_fact,
     ban_user,
     unban_user,
@@ -59,6 +61,12 @@ def prepare_management_handlers(config: dict[str, Any], db_session: sessionmaker
     handlers["add_fact"] = partial(
         add_fact, vector_store=vectorstore, db_session=db_session
     )
+    handlers["add_fact_from_replied"] = partial(
+        add_fact_from_replied, vector_store=vectorstore, db_session=db_session
+    )
+    handlers["add_facts_from_link"] = partial(
+        add_facts_from_link, vector_store=vectorstore, db_session=db_session
+    )
     handlers["ban_user"] = partial(ban_user, db_session=db_session)
     handlers["unban_user"] = partial(unban_user, db_session=db_session)
     handlers["add_admin"] = partial(add_admin, db_session=db_session)
@@ -99,6 +107,12 @@ if __name__ == "__main__":
     add_source_for_fact_handler = CommandHandler(
         "add_source", manag_handlers["add_source_for_fact"]
     )
+    add_fact_from_replied_handler = CommandHandler(
+        "add_rep", manag_handlers["add_fact_from_replied"]
+    )
+    add_facts_from_link_handler = CommandHandler(
+        "add_link", manag_handlers["add_facts_from_link"]
+    )
     ban_handler = CommandHandler("ban", manag_handlers["ban_user"])
     unban_handler = CommandHandler("unban", manag_handlers["unban_user"])
     add_admin_handler = CommandHandler("add_admin", manag_handlers["add_admin"])
@@ -113,7 +127,9 @@ if __name__ == "__main__":
     application.add_handler(retieve_docs_to_replied_handler)
     application.add_handler(private_message_handler)
     application.add_handler(add_fact_handler)
+    application.add_handler(add_fact_from_replied_handler)
     application.add_handler(add_source_for_fact_handler)
+    application.add_handler(add_facts_from_link_handler)
     application.add_handler(ban_handler)
     application.add_handler(unban_handler)
     application.add_handler(add_admin_handler)
