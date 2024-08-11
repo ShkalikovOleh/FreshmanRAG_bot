@@ -1,17 +1,19 @@
 import os
 
+import hydra
+from omegaconf import DictConfig
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 
 from bot.db import Admin, Base
-from bot.utils import load_config
 
-if __name__ == "__main__":
-    config = load_config()
+
+@hydra.main(version_base="1.3", config_path="../configs", config_name="default")
+def main(config: DictConfig) -> None:
     father_tg_id = os.getenv("FATHER_TG_ID")
     father_tg_tag = os.getenv("FATHER_TG_TAG")
-    engine = create_engine(config["db_connection"])
+    engine = create_engine(config["bot_db_connection"])
 
     Base.metadata.create_all(engine)
     Session = sessionmaker(engine)
@@ -29,3 +31,7 @@ if __name__ == "__main__":
             session.commit()
     except IntegrityError:
         print("Database has been already created and initialized!")
+
+
+if __name__ == "__main__":
+    main()

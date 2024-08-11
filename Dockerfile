@@ -11,13 +11,15 @@ RUN apt-get update && apt-get install -y \
     gcc \
     python3-dev \
     libopenblas-dev \
+    ninja-build \
+    pkg-config \
     build-essential \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/*
 
-# Install pip requirements
+# Install requirements
 COPY requirements.txt .
-RUN python -m pip install --no-cache-dir -r requirements.txt
+RUN CMAKE_ARGS="-DGGML_BLAS=ON -DGGML_BLAS_VENDOR=OpenBLAS" python -m pip install --no-cache-dir -r requirements.txt
 
 WORKDIR /app
 COPY . /app
@@ -27,4 +29,4 @@ RUN python -m pip install .
 RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
 
-CMD ["init_scripts/entry.sh"]
+CMD ["sh", "init_scripts/entry.sh"]
