@@ -5,7 +5,7 @@ from langgraph.graph import END, START, StateGraph
 
 from crag.pipelines.base import SimpleRagGraphState, giveup
 from crag.pipelines.simple_rag import SimpleRAG
-from crag.retrievers import PipelineRetrieverBase
+from crag.retrievers.base import PipelineRetrieverBase
 
 
 class RAGWithDocsFiltering(SimpleRAG):

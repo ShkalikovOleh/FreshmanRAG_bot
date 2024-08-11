@@ -10,7 +10,7 @@ from bot.db import Admin, BannedUserOrChat
 from bot.decorators import admin_only, with_db_session
 from bot.utils import remove_bot_command
 from crag.knoweledge.load_telegraph_guides import load_telegraph_guides
-from crag.retrievers import PipelineRetrieverBase
+from crag.retrievers.base import PipelineRetrieverBase
 
 
 @with_db_session()

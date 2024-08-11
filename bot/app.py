@@ -26,7 +26,7 @@ from bot.handlers.rag import (
     retieve_docs_to_replied,
 )
 from bot.handlers.service import error, help, start, unknown
-from crag.retrievers import PipelineRetrieverBase
+from crag.retrievers.base import PipelineRetrieverBase
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO

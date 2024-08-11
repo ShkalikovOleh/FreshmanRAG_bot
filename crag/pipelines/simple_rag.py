@@ -8,7 +8,7 @@ from crag.pipelines.base import (
     SimpleRagGraphState,
     documents_to_context_str,
 )
-from crag.retrievers import PipelineRetrieverBase
+from crag.retrievers.base import PipelineRetrieverBase
 
 
 class SimpleRAG(PipelineBase):

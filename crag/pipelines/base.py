@@ -6,7 +6,7 @@ from langchain_core.language_models import BaseLanguageModel
 from langchain_core.runnables import Runnable
 from langgraph.graph import StateGraph
 
-from crag.retrievers import PipelineRetrieverBase
+from crag.retrievers.base import PipelineRetrieverBase
 
 
 class PipelineBase(ABC):
