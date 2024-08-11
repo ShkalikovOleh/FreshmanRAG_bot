@@ -9,8 +9,9 @@ services:
       dockerfile: ./Dockerfile
     depends_on:
       - db
+      - elasticsearch
     networks:
-      - postgres-network
+      - bot-network
     volumes:
       - ${PWD}/.models/:/app/.models
       - ${PWD}/configs/:/app/configs
@@ -22,7 +23,7 @@ services:
     env_file:
       - .env
     networks:
-      - postgres-network
+      - bot-network
     volumes:
       - ${PWD}/data/db-data/:/var/lib/postgresql/data/
   pgadmin:
@@ -35,10 +36,26 @@ services:
     depends_on:
       - db
     networks:
-      - postgres-network
+      - bot-network
     volumes:
       - ${PWD}/data/pgadmin-data/:/var/lib/pgadmin/
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.1
+    restart: always
+    networks:
+      - bot-network
+    volumes:
+      - ${PWD}/data/es_data:/usr/share/elasticsearch/data
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - cluster.routing.allocation.disk.threshold_enabled=false
+    deploy:
+      resources:
+        limits:
+          memory: 1GB
 
 networks:
-  postgres-network:
+  bot-network:
     driver: bridge
