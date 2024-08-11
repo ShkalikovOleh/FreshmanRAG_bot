@@ -20,10 +20,10 @@ class RAGWithQuestionRewriting(RAGWithDocsFiltering):
         llm: BaseLanguageModel,
         rag_prompt: PromptTemplate,
         gradining_prompt: PromptTemplate,
-        rewrite_prompt: PromptTemplate,
+        rewriting_prompt: PromptTemplate,
     ) -> None:
         super().__init__(retriever, llm, rag_prompt, gradining_prompt)
-        self._rewrite_chain = rewrite_prompt | llm | StrOutputParser()
+        self._rewrite_chain = rewriting_prompt | llm | StrOutputParser()
 
     async def rewrite(
         self, state: RAGWithQuestionRewritingState

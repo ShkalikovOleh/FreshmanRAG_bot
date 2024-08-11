@@ -1,7 +1,4 @@
-import json
-import os
-import re
-from typing import Any, List
+from typing import List
 
 from langchain_core.documents import Document
 
@@ -47,28 +44,3 @@ def docs_to_sources_str(documents: List[Document]) -> str:
 
 def remove_bot_command(message: str, command: str, bot_name: str):
     return message.removeprefix(f"/{command}").removeprefix(bot_name).strip()
-
-
-def recursive_substitute_envs(cfg: dict[str, Any]) -> None:
-    for k, v in cfg.items():
-        if isinstance(v, dict):
-            recursive_substitute_envs(v)
-        elif isinstance(v, str):
-            prev_end = 0
-            new_value = ""
-            for match in re.finditer("{env.\w+}", v):  # noqa
-                env_name = match.group()[5:-1]
-                new_value += v[prev_end : match.start()] + os.getenv(env_name)
-                prev_end = match.end()
-            if prev_end != 0:
-                cfg[k] = new_value
-
-
-def load_config() -> dict[str, Any]:
-    cfg_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config.json")
-    with open(cfg_path) as file:
-        cfg = json.load(file)
-
-    recursive_substitute_envs(cfg)
-
-    return cfg

@@ -4,18 +4,6 @@ from telegram.constants import ChatType
 from bot.db import Admin, BannedUserOrChat
 
 
-def cache_once(f):
-    prev_res = None
-
-    def wrapped(*args, **kwargs):
-        nonlocal prev_res
-        if prev_res is None:
-            prev_res = f(*args, **kwargs)
-        return prev_res
-
-    return wrapped
-
-
 def with_db_session(session_param_name="db_session"):
     def decorator(handler):
         async def wrapper(*args, **kwargs):

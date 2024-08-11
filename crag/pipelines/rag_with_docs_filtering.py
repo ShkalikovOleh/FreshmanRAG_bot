@@ -26,7 +26,7 @@ class RAGWithDocsFiltering(SimpleRAG):
 
         relevant_docs = []
         for doc in documents:
-            result = self._grade_chain.ainvoke(
+            result = await self._grade_chain.ainvoke(
                 {"document": doc.page_content, "question": question}
             )
             if result["score"]:

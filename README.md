@@ -15,12 +15,12 @@ There are two categories of bot commands: user commands and admin commands. Admi
 + **/start** - show welcome message
 
 ### RAG pipeline types
-Currently 3 different RAG pipelines are implemented. By default the bot uses the *Conditional RAG with question rewriting* pipeline, but you can change it to a desired one in the `config.json` file.
+Currently 3 different RAG pipelines are implemented. By default the bot uses the *Conditional RAG with question rewriting* pipeline, but you can change in the [configs](#configuration).
 
 All pipelines support the ability to return only documents relevant to a question without LLM answer generation, it is implemented as a conditional edge which is depicted as `stop` on all diagrams below.
 
 #### Simple RAG
-The `Simple RAG` pipeline that uses the Sentence-BERT model (by default [*lang-uk/ukr-paraphrase-multilingual-mpnet-base*](https://huggingface.co/lang-uk/ukr-paraphrase-multilingual-mpnet-base)) to extract embeddings and vector store (by default `pgvector`) to find the nearest documents from the knowledge base and then optionally use the retrieved information for generation.
+The `Simple RAG` pipeline that uses the provided [retriever](#retrievers) to find the relevant documents from the knowledge base and then optionally use this information for generation.
 
 ![Simple RAG](assets/simple_rag.png)
 
@@ -39,6 +39,11 @@ This bot is currently using Gemma2-2B-it (Q5-K quantized) as an LLM. This is due
 
 If I have time, I plan to fine-tune Gemma2-2B-it for better understanding of Ukrainian (including expanding the tokenizer dictionary) and especially for RAG. You will find corresponding training script in the `llms` directory.
 
+## Retrievers
+By default we use dense vector retriever with Sentence-BERT model [*lang-uk/ukr-paraphrase-multilingual-mpnet-base*](https://huggingface.co/lang-uk/ukr-paraphrase-multilingual-mpnet-base) to extract embeddings and `pgvector` as a vector store.
+
+## Configuration
+To configure the bot I use reliable and flexible tool called Hydra. In the [configs](./configs/) directory you can find and add your own configs. Please read the [docs](https://hydra.cc/docs/1.3/intro/) to properly to do it. By default (and especially inside docker container) bot load default config, so one has to not just add new configurations but also appropriately change [default.yaml](./configs/default.yaml).
 
 ## How to deploy
 The easiest way to deploy the bot is to:
@@ -46,7 +51,7 @@ The easiest way to deploy the bot is to:
 ```
 git clone git@github.com:ShkalikovOleh/FreshmanRAG_bot.git
 ```
-2. Load all desired models (please use scripts from [init_scripts](https://github.com/ShkalikovOleh/FreshmanRAG_bot/tree/master/init_scripts)) into the `.models` directory and check model paths in the `config.json`
+2. Load all desired models (please use scripts from [init_scripts](./init_scripts/)) into the `.models` directory and optionally place your own configs in the `configs` directory.
 3. Place `.env` file with your api keys and other variables (as in the example.env) in the repo directory
 4. Run with docker-compose
 ```

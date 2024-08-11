@@ -1,0 +1,6 @@
+_target_: crag.pipelines.RAGWithQuestionRewriting
+retriever: ${retriever}
+llm: ${llm}
+rag_prompt: ${prompts.rag_prompt}
+gradining_prompt: ${prompts.grading_prompt}
+rewriting_prompt: ${prompts.rewriting_prompt}

@@ -1,0 +1,5 @@
+_target_: crag.pipelines.RAGWithDocsFiltering
+retriever: ${retriever}
+llm: ${llm}
+rag_prompt: ${prompts.rag_prompt}
+gradining_prompt: ${prompts.grading_prompt}

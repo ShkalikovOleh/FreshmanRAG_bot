@@ -13,6 +13,7 @@ services:
       - postgres-network
     volumes:
       - ${PWD}/.models/:/app/.models
+      - ${PWD}/configs/:/app/configs
     env_file:
       - .env
   db:
