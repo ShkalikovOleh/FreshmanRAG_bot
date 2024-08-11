@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - retriever: pgvector
+  - retriever: ensemble_parent_pg_bm25
   - llm: gemma2_2b_it
   - prompts: gemma2
   - pipeline: rag_with_question_rewriting

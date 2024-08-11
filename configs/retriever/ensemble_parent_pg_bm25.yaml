@@ -1,0 +1,8 @@
+defaults:
+  - /retriever@_global_.dense_retriever: parent_pg
+  - /retriever@_global_.sparse_retriever: elasticsearch_bm25
+
+_target_: crag.retrievers.EnsembleRetriever
+retrievers:
+  - ${dense_retriever}
+  - ${sparse_retriever}

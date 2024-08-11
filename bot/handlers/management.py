@@ -1,7 +1,5 @@
-import json
-
 from langchain_core.documents import Document
-from sqlalchemy import delete, text
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from telegram import Update
 from telegram.ext import ContextTypes

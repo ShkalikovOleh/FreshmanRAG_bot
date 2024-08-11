@@ -14,15 +14,17 @@ class EnsembleRetriever(PipelineRetrieverBase):
     def __init__(
         self,
         retrievers: List[PipelineRetrieverBase | BaseRetriever],
-        weights: List[float],
+        weights: List[float] | None = None,
         c: int = 60,
         id_key: str | None = None,
     ) -> None:
         super().__init__()
         base_retrievers = [retriever.retriever for retriever in retrievers]
         self._retriever = LangchainEnsembleRetriever(
-            base_retrievers, weights, c, id_key
+            retrievers=base_retrievers, c=c, id_key=id_key
         )
+        if weights is not None:
+            self._retriever.weights = weights
         self._child_retrievers = retrievers
 
     async def aadd_documents(self, docs: List[Document], **kwargs) -> List[str]:

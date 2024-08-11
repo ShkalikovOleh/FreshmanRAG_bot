@@ -1,5 +1,5 @@
 defaults:
-  - ovveride /retriever@_global_.pgvector: pgvector
+  - /retriever@_global_.pgvector: pgvector
 
 _target_: crag.retrievers.ParentDocumentRetriever
 vector_store: ${pgvector.vector_store}
