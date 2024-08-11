@@ -1,8 +1,11 @@
 import logging
 import os
 from functools import partial
-from typing import Any
 
+import hydra
+from hydra.utils import instantiate
+from langchain_core.runnables import Runnable
+from omegaconf import DictConfig
 from sqlalchemy.orm import sessionmaker
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 
@@ -23,18 +26,14 @@ from bot.handlers.rag import (
     retieve_docs_to_replied,
 )
 from bot.handlers.service import error, help, start, unknown
-from bot.utils import load_config
-from crag.graphs import get_graph
-from crag.retrievers import get_vectorstore
+from crag.retrievers import PipelineRetrieverBase
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 
 
-def prepare_rag_based_handlers(config: dict[str, Any], db_session: sessionmaker):
-    graph = get_graph(config)
-
+def prepare_rag_based_handlers(graph: Runnable, db_session: sessionmaker):
     answer_with_graph = partial(answer, graph=graph, db_session=db_session)
     answer_to_replied_with_graph = partial(
         answer_to_replied, graph=graph, db_session=db_session
@@ -52,20 +51,19 @@ def prepare_rag_based_handlers(config: dict[str, Any], db_session: sessionmaker)
     }
 
 
-def prepare_management_handlers(config: dict[str, Any], db_session: sessionmaker):
-    store_type = config["retriever_config"]["vector_store_type"]
-    store_args = config["retriever_config"]["vector_store_args"]
-    vectorstore = get_vectorstore(store_type, None, **store_args)
-
+def prepare_management_handlers(
+    pipe_retriever: PipelineRetrieverBase,
+    db_session: sessionmaker,
+):
     handlers = {}
     handlers["add_fact"] = partial(
-        add_fact, vector_store=vectorstore, db_session=db_session
+        add_fact, pipe_retriever=pipe_retriever, db_session=db_session
     )
     handlers["add_fact_from_replied"] = partial(
-        add_fact_from_replied, vector_store=vectorstore, db_session=db_session
+        add_fact_from_replied, pipe_retriever=pipe_retriever, db_session=db_session
     )
     handlers["add_facts_from_link"] = partial(
-        add_facts_from_link, vector_store=vectorstore, db_session=db_session
+        add_facts_from_link, pipe_retriever=pipe_retriever, db_session=db_session
     )
     handlers["ban_user"] = partial(ban_user, db_session=db_session)
     handlers["unban_user"] = partial(unban_user, db_session=db_session)
@@ -77,11 +75,13 @@ def prepare_management_handlers(config: dict[str, Any], db_session: sessionmaker
     return handlers
 
 
-if __name__ == "__main__":
-    config = load_config()
-    db_session = get_db_sessionmaker(config["db_connection"])
-    rag_handlers = prepare_rag_based_handlers(config, db_session)
-    manag_handlers = prepare_management_handlers(config, db_session)
+@hydra.main(version_base="1.3", config_path="../configs", config_name="default")
+def main(config: DictConfig) -> None:
+    db_session = get_db_sessionmaker(config["bot_db_connection"])
+    pipeline = instantiate(config["pipeline"])
+
+    rag_handlers = prepare_rag_based_handlers(pipeline.graph, db_session)
+    manag_handlers = prepare_management_handlers(pipeline.pipe_retriever, db_session)
 
     tgbot_token = os.getenv("TGBOT_TOKEN")
     application = ApplicationBuilder().token(tgbot_token).build()
@@ -138,3 +138,7 @@ if __name__ == "__main__":
     application.add_error_handler(error)
 
     application.run_polling()
+
+
+if __name__ == "__main__":
+    main()

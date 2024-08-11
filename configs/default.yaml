@@ -1,0 +1,8 @@
+defaults:
+  - _self_
+  - retriever: pgvector
+  - llm: gemma2_2b_it
+  - prompts: gemma2
+  - pipeline: simple_rag
+
+bot_db_connection: "postgresql+psycopg://${oc.env:POSTGRES_USER}:${oc.env:POSTGRES_PASSWORD}@${oc.env:POSTGRES_HOST}:5432/${oc.env:POSTGRES_DB}"

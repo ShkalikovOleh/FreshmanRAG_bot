@@ -178,3 +178,6 @@ data
 # Env files
 .env
 local.env
+
+# Hydra logs
+outputs

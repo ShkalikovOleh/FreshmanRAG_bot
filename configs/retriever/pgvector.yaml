@@ -1,0 +1,10 @@
+_target_: crag.retrievers.VectorStoreRetriever
+vector_store:
+  _target_: langchain_postgres.PGVector
+  connection: "postgresql+psycopg://${oc.env:POSTGRES_USER}:${oc.env:POSTGRES_PASSWORD}@${oc.env:POSTGRES_HOST}:5432/${oc.env:POSTGRES_DB}"
+  collection_name: FreshmanRAG
+  async_mode: True
+  use_jsonb: True
+  embeddings:
+    _target_: langchain_huggingface.HuggingFaceEmbeddings
+    model_name: .models/ukr-paraphrase-multilingual-mpnet-base

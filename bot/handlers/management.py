@@ -1,7 +1,6 @@
 import json
 
 from langchain_core.documents import Document
-from langchain_core.vectorstores import VectorStore
 from sqlalchemy import delete, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from telegram import Update
@@ -11,6 +10,7 @@ from bot.db import Admin, BannedUserOrChat
 from bot.decorators import admin_only, with_db_session
 from bot.utils import remove_bot_command
 from crag.knoweledge.load_telegraph_guides import load_telegraph_guides
+from crag.retrievers import PipelineRetrieverBase
 
 
 @with_db_session()
@@ -18,12 +18,10 @@ from crag.knoweledge.load_telegraph_guides import load_telegraph_guides
 async def add_fact(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
-    vector_store: VectorStore,
+    pipe_retriever: PipelineRetrieverBase,
     **kwargs,
 ):
-    info = remove_bot_command(
-        update.effective_message.text, "add", context.bot.name
-    )
+    info = remove_bot_command(update.effective_message.text, "add", context.bot.name)
     if len(info) == 0:
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
@@ -49,7 +47,7 @@ async def add_fact(
             "title": title,
         },
     )
-    ids = await vector_store.aadd_documents([doc])
+    ids = await pipe_retriever.aadd_documents([doc])
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
@@ -63,7 +61,7 @@ async def add_fact(
 async def add_fact_from_replied(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
-    vector_store: VectorStore,
+    pipe_retriever: PipelineRetrieverBase,
     **kwargs,
 ):
     info = remove_bot_command(
@@ -96,7 +94,7 @@ async def add_fact_from_replied(
             "title": title,
         },
     )
-    ids = await vector_store.aadd_documents([doc])
+    ids = await pipe_retriever.aadd_documents([doc])
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
@@ -110,7 +108,7 @@ async def add_fact_from_replied(
 async def add_facts_from_link(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
-    vector_store: VectorStore,
+    pipe_retriever: PipelineRetrieverBase,
     **kwargs,
 ):
     if len(context.args) != 1:
@@ -123,7 +121,7 @@ async def add_facts_from_link(
 
     url = context.args[0]
     docs = load_telegraph_guides([url], False)
-    await vector_store.aadd_documents(docs)
+    await pipe_retriever.aadd_documents(docs)
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,

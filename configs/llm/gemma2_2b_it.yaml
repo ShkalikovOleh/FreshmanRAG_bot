@@ -1,0 +1,9 @@
+_target_: langchain_community.llms.LlamaCpp
+model_path: .models/model.gguf
+temperature: 0.75
+max_tokens: 2000
+top_p: 1
+use_mmap: false
+mlock: true
+n_ctx: 4096
+verbose: False

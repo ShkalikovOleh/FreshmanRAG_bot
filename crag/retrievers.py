@@ -1,57 +1,74 @@
-from typing import Any
+from abc import ABC, abstractmethod
+from typing import List
 
-from langchain_core.embeddings import Embeddings
+from langchain.retrievers import EnsembleRetriever as LangchainEnsembleRetriever
+from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.vectorstores import VectorStore
 
-from bot.decorators import cache_once
+
+class PipelineRetrieverBase(ABC):
+    """The wrapper around Langchain Retriever which gives ability to
+    add and delete documents fron an underling store. The main purpose
+    of this class is to simplify instantiation from a config file and
+    abstract addition and deletion documents in order to do in from the bot.
+    """
+
+    _retriever: BaseRetriever
+
+    @property
+    def retriever(self) -> BaseRetriever:
+        return self._retriever
+
+    @abstractmethod
+    async def aadd_documents(self, docs: List[Document], **kwargs) -> List[str]:
+        pass
+
+    @abstractmethod
+    async def adelete_documents(self, ids: List[str], **kwargs) -> bool | None:
+        pass
 
 
-def get_retriever(retriever_config: dict[str, Any]) -> BaseRetriever:
-    k = retriever_config.get("k", 4)
-    store_type = retriever_config["vector_store_type"]
-    store_args = retriever_config["vector_store_args"]
-    emb_type = retriever_config["embeeddings_type"]
-    emb_args = retriever_config["embeeddings_args"]
+class VectorStoreRetriever(PipelineRetrieverBase):
+    """Creates a Retriever from a given VectorStore by calling as_retriever method"""
 
-    embeddings = get_embeddings(emb_type, **emb_args)
-    vectorstore = get_vectorstore(store_type, embeddings, **store_args)
+    def __init__(self, vector_store: VectorStore, **kwargs) -> None:
+        super().__init__()
+        self._vector_store = vector_store
+        self._retriever = vector_store.as_retriever(**kwargs)
 
-    retriever = vectorstore.as_retriever(k=k)
-    return retriever
+    async def aadd_documents(self, docs: List[Document], **kwargs) -> List[str]:
+        return await self._vector_store.aadd_documents(docs, **kwargs)
 
-
-def get_embeddings(emb_type: str, **emb_args) -> Embeddings:
-    match emb_type:
-        case "hugging_face":
-            return get_hf_embeeddings(**emb_args)
-        case _:
-            raise ValueError("Unsupported embeddings type")
+    async def adelete_documents(self, ids: List[str], **kwargs) -> bool | None:
+        return await self._vector_store.adelete(ids, **kwargs)
 
 
-@cache_once
-def get_vectorstore(store_type: str, embeddings: Embeddings | None, **store_args):
-    match store_type:
-        case "pgvector":
-            return get_pgvector_store(embeddings, **store_args)
-        case _:
-            raise ValueError("Unsupported vectore store type")
+class EnsembleRetriever(PipelineRetrieverBase):
+    """Wrapper around langchain.retrievers.EnsembleRetriever that implements
+    functionality to add"""
 
+    def __init__(
+        self,
+        retrievers: List[PipelineRetrieverBase | BaseRetriever],
+        weights: List[float],
+        c: int = 60,
+        id_key: str | None = None,
+    ) -> None:
+        super().__init__()
+        base_retrievers = [retriever.retriever for retriever in retrievers]
+        self._retriever = LangchainEnsembleRetriever(
+            base_retrievers, weights, c, id_key
+        )
+        self._child_retrievers = retrievers
 
-def get_pgvector_store(embeddings, **kwargs) -> VectorStore:
-    from langchain_postgres import PGVector
+    async def aadd_documents(self, docs: List[Document], **kwargs) -> List[str]:
+        ids = await self._child_retrievers[0].aadd_documents(docs)
+        for base_retriever in self._child_retrievers[1:]:
+            await base_retriever.aadd_documents(docs, ids=ids)
 
-    collection_name = "FreshmanRAG"
-    vectorstore = PGVector(
-        embeddings=embeddings, collection_name=collection_name, use_jsonb=True, **kwargs
-    )
-
-    return vectorstore
-
-
-def get_hf_embeeddings(**kwargs) -> Embeddings:
-    from langchain_huggingface import HuggingFaceEmbeddings
-
-    embeddings = HuggingFaceEmbeddings(**kwargs)
-
-    return embeddings
+    async def adelete_documents(self, ids: List[str], **kwargs) -> bool | None:
+        result = True
+        for base_retriever in self._child_retrievers:
+            result = result and await base_retriever.adelete_documents(ids)
+        return result

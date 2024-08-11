@@ -1,0 +1,4 @@
+_target_: crag.pipelines.SimpleRAG
+retriever: ${retriever}
+llm: ${llm}
+rag_prompt: ${prompts.rag_prompt}

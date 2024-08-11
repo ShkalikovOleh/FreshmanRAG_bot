@@ -1,5 +1,3 @@
-import argparse
-import asyncio
 from typing import List
 
 import requests
@@ -7,9 +5,6 @@ from bs4 import BeautifulSoup
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.documents import Document
 from langchain_text_splitters import HTMLSectionSplitter, RecursiveCharacterTextSplitter
-
-from bot.utils import load_config
-from crag.retrievers import get_embeddings, get_vectorstore
 
 
 def load_telegraph_guides(urls: List[str], split_headers: bool = False):
@@ -81,38 +76,3 @@ def split_into_chunks(docs: List[Document]) -> List[Document]:
     )
     chunked_docs = text_splitter.split_documents(docs)
     return chunked_docs
-
-
-async def main(cfg: argparse.Namespace) -> None:
-    with open(cfg.urls) as f:
-        urls = [line.strip() for line in f.readlines()]
-        docs = load_telegraph_guides(urls, cfg.split_headers)
-
-        config = load_config()
-
-        emb_type = config["retriever_config"]["embeeddings_type"]
-        emb_args = config["retriever_config"]["embeeddings_args"]
-        embeddings = get_embeddings(emb_type, **emb_args)
-
-        store_type = config["retriever_config"]["vector_store_type"]
-        store_args = config["retriever_config"]["vector_store_args"]
-        vectorstore = get_vectorstore(store_type, embeddings, **store_args)
-
-        await vectorstore.aadd_documents(docs)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Adds given telegraph guides to the knoweledge base"
-    )
-    parser.add_argument(
-        "--split-headers",
-        action=argparse.BooleanOptionalAction,
-        default=False,
-        help="Whether split guides by header",
-    )
-    parser.add_argument("--urls", type=str, help="File with links to guides")
-
-    cfg = parser.parse_args()
-
-    asyncio.run(main(cfg))
