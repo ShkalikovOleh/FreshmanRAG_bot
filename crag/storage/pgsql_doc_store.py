@@ -21,7 +21,7 @@ class LangchainDocumentsStores(Base):
     cmetadata = Column(JSONB, nullable=True)
 
 
-class SQLDocStore(SQLStore):
+class PGSQLDocStore(SQLStore):
     def create_schema(self) -> None:
         Base.metadata.create_all(self.engine)
 

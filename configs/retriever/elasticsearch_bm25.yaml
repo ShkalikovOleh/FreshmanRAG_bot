@@ -1,0 +1,7 @@
+_target_: crag.retrievers.VectorStoreRetriever
+vector_store:
+  _target_: langchain_elasticsearch.ElasticsearchStore
+  index_name: freshmanrag
+  es_url: http://${oc.env:ELASTIC_HOST}:9200
+  strategy:
+    _target_: langchain_elasticsearch.BM25Strategy

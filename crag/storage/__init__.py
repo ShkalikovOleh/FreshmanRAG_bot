@@ -1,3 +1,3 @@
-from .pgsql_doc_store import SQLDocStore
+from .pgsql_doc_store import PGSQLDocStore
 
-__all__ = ["SQLDocStore"]
+__all__ = ["PGSQLDocStore"]
