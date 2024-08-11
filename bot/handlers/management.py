@@ -173,7 +173,7 @@ async def get_user_id_from_message(
             chat_id=update.effective_chat.id,
             reply_to_message_id=update.effective_message.id,
             text="Неправильний формат аргументів. Будь ласка, зазначте id "
-            "користувача або напишіть цю команду у відповідь на його повідомдення.",
+            "користувача або напишіть цю команду у відповідь на його повідомлення.",
         )
 
     return banned_user_id
