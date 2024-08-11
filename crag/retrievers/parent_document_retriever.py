@@ -32,6 +32,10 @@ class ParentDocumentRetriever(PipelineRetrieverBase, LangchainParentDocumentRetr
             **kwargs,
         )
 
+    @property
+    def retriever(self):
+        return self
+
     async def aadd_documents(
         self,
         docs: List[Document],

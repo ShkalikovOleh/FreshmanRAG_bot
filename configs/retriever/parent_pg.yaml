@@ -1,0 +1,14 @@
+defaults:
+  - ovveride /retriever@_global_.pgvector: pgvector
+
+_target_: crag.retrievers.ParentDocumentRetriever
+vector_store: ${pgvector.vector_store}
+docstore:
+  _target_: crag.storage.PGSQLDocStore
+  namespace: docstore
+  db_url: ${pgvector.vector_store.connection}
+  async_mode: True
+child_splitter:
+  _target_: langchain_text_splitters.RecursiveCharacterTextSplitter.from_tiktoken_encoder
+  chunk_size: 200
+  chunk_overlap: 10
