@@ -31,6 +31,7 @@ class EnsembleRetriever(PipelineRetrieverBase):
         ids = await self._child_retrievers[0].aadd_documents(docs)
         for base_retriever in self._child_retrievers[1:]:
             await base_retriever.aadd_documents(docs, ids=ids)
+        return ids
 
     async def adelete_documents(self, ids: List[str], **kwargs) -> bool | None:
         result = True

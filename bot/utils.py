@@ -11,32 +11,41 @@ def make_html_quote(text: str) -> str:
     return f"<blockquote>{text}</blockquote>"
 
 
+def tg_message_to_source_str(doc: Document) -> str:
+    author = doc.metadata["author"]
+    title = doc.metadata["title"]
+
+    if doc.metadata["is_public"]:
+        link = doc.metadata["source"]
+        link_str = make_html_link(link, title)
+        return f"{link_str} від {author}"
+    else:
+        doc_quote = make_html_quote(doc.page_content)
+        return f"{title} від {author}: {doc_quote}"
+
+
+def web_doc_to_source_str(doc: Document) -> str:
+    title = doc.metadata["title"]
+    link = doc.metadata["source"]
+    return make_html_link(link, title)
+
+
 def docs_to_sources_str(documents: List[Document]) -> str:
     links = set()
     source_text_rows = []
+    idx = 1
     for doc in documents:
-        title = doc.metadata["title"]
-
-        if "is_public" in doc.metadata and not doc.metadata["is_public"]:
-            link = doc.metadata.get("public_source", None)
+        if "is_public" in doc.metadata:
+            source_str = tg_message_to_source_str(doc)
+        elif doc.metadata["source"] in links:
+            links.add(doc.metadata["source"])
+            source_str = web_doc_to_source_str(doc)
         else:
-            link = doc.metadata["source"]
+            continue
 
-        author = doc.metadata.get("author", None)
-
-        if link is not None:
-            if link in links:
-                continue
-            links.add(link)
-            citation = make_html_link(link, title)
-            if author is not None:
-                citation += f" від {author}"
-        else:
-            citation = title + f" від {author}:" + "\n\n" + doc.page_content + "\n"
-
-        idx = len(source_text_rows) + 1
-        out_row = f"[{idx}] {citation}"
+        out_row = f"[{idx}] {source_str}"
         source_text_rows.append(out_row)
+        idx += 1
 
     sources_text = "\n".join(source_text_rows)
     return sources_text
