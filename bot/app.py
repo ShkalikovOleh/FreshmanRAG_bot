@@ -15,8 +15,8 @@ from bot.handlers.management import (
     add_fact,
     add_fact_from_replied,
     add_facts_from_link,
-    add_public_source_to_fact,
     ban_user,
+    delete_fact,
     unban_user,
 )
 from bot.handlers.rag import (
@@ -68,8 +68,8 @@ def prepare_management_handlers(
     handlers["ban_user"] = partial(ban_user, db_session=db_session)
     handlers["unban_user"] = partial(unban_user, db_session=db_session)
     handlers["add_admin"] = partial(add_admin, db_session=db_session)
-    handlers["add_source_for_fact"] = partial(
-        add_public_source_to_fact, db_session=db_session
+    handlers["delete_fact"] = partial(
+        delete_fact, pipe_retriever=pipe_retriever, db_session=db_session
     )
 
     return handlers
@@ -104,9 +104,7 @@ def main(config: DictConfig) -> None:
     )
 
     add_fact_handler = CommandHandler("add", manag_handlers["add_fact"])
-    add_source_for_fact_handler = CommandHandler(
-        "add_source", manag_handlers["add_source_for_fact"]
-    )
+    delete_fact_handler = CommandHandler("del", manag_handlers["delete_fact"])
     add_fact_from_replied_handler = CommandHandler(
         "add_rep", manag_handlers["add_fact_from_replied"]
     )
@@ -128,7 +126,7 @@ def main(config: DictConfig) -> None:
     application.add_handler(private_message_handler)
     application.add_handler(add_fact_handler)
     application.add_handler(add_fact_from_replied_handler)
-    application.add_handler(add_source_for_fact_handler)
+    application.add_handler(delete_fact_handler)
     application.add_handler(add_facts_from_link_handler)
     application.add_handler(ban_handler)
     application.add_handler(unban_handler)

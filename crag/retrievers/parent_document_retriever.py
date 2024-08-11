@@ -63,8 +63,11 @@ class ParentDocumentRetriever(PipelineRetrieverBase, LangchainParentDocumentRetr
         return list(id for id, _ in full_docs)
 
     async def adelete_documents(self, ids: List[str]) -> bool | None:
+        success = True
         for docs in await self.docstore.amget(ids):
             children_ids = docs.metadata["children_ids"]
-            await self.vectorstore.adelete(children_ids)
+            success = success and await self.vectorstore.adelete(children_ids)
 
         await self.docstore.amdelete(ids)
+
+        return success

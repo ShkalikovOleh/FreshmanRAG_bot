@@ -104,6 +104,45 @@ async def add_fact_from_replied(
 
 
 @with_db_session()
+@admin_only(should_can_add_info=True, should_can_add_admins=False)
+async def delete_fact(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    pipe_retriever: PipelineRetrieverBase,
+    **kwargs,
+):
+    if len(context.args) != 1:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            reply_to_message_id=update.effective_message.id,
+            text=(
+                "Неправильний формат аргументів. "
+                "Очікувався тільки id документа, який треба видалити."
+            ),
+        )
+        return
+
+    fact_id = context.args[0]
+    success = await pipe_retriever.adelete_documents([fact_id])
+
+    if success:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            reply_to_message_id=update.effective_message.id,
+            text="Інформацію видалено з бази знань.",
+        )
+    else:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            reply_to_message_id=update.effective_message.id,
+            text=(
+                "Щось пішло не так. Інформацію не видалено з бази знань. "
+                "Можливо вона вже була видалена."
+            ),
+        )
+
+
+@with_db_session()
 @admin_only(should_can_add_admins=False, should_can_add_info=True)
 async def add_facts_from_link(
     update: Update,
@@ -128,31 +167,6 @@ async def add_facts_from_link(
         reply_to_message_id=update.effective_message.id,
         text="Інформацію успішно додано до бази знань.",
     )
-
-
-@with_db_session()
-@admin_only(should_can_add_admins=False, should_can_add_info=True)
-async def add_public_source_to_fact(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, db_session: AsyncSession
-):
-    data_id = context.args[0]
-    source_link = context.args[1]
-
-    sql = """UPDATE langchain_pg_embedding
-        SET cmetadata=jsonb_set(cmetadata, '{public_source}', :source)
-        WHERE id::text=:data_id"""
-
-    result = await db_session.execute(
-        text(sql), {"data_id": data_id, "source": json.dumps(source_link)}
-    )
-    await db_session.commit()
-
-    if result.rowcount > 0:
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            reply_to_message_id=update.effective_message.id,
-            text="Посилання на публічне джерело додано до запису у базі знань.",
-        )
 
 
 async def get_user_id_from_message(
