@@ -62,7 +62,7 @@ The overall structure of the configs is the following:
 The easiest way to deploy the bot is to:
 1. Download a release docker-compose file and optionally required scripts from the [init_scripts](./init_scripts/) directory
 ```
-wget https://github.com/ShkalikovOleh/FreshmanRAG_bot/blob/master/docker-compose.release.yml
+wget https://raw.githubusercontent.com/ShkalikovOleh/FreshmanRAG_bot/master/docker-compose.release.yml
 ```
 2. Load all desired models (please use scripts from [init_scripts](./init_scripts/)) into the `.models` directory and optionally place your own configs in the `configs` directory.
 3. Place `.env` file with your api keys and other variables (as in the [example.env](./example.env)) in the repo directory
