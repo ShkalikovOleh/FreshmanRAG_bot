@@ -29,7 +29,7 @@ class RAGWithDocsFiltering(SimpleRAG):
             result = await self._grade_chain.ainvoke(
                 {"document": doc.page_content, "question": question}
             )
-            if result["score"]:
+            if (isinstance(result, dict) and result["score"]) or result == 1:
                 relevant_docs.append(doc)
 
         state["documents"] = relevant_docs
