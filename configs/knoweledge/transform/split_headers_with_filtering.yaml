@@ -1,0 +1,18 @@
+_target_: crag.knoweledge.transformations.sequence.TransformationSequence
+transforms: langchain_text_splitters.HTMLSectionSplitter
+  -
+    - text_splitter
+    - _target_: langchain_text_splitters.HTMLSectionSplitter
+    headers_to_split_on:
+      - ["h1", "Header 1"],
+      - ["h2", "Header 2"],
+      - ["h3", "Header 3"],
+  -
+    - function
+    - _target_: crag.knoweledge.transformations.filter_telegram_headers.filter_telegram_headers
+    _partial_: True
+  -
+    - text_splitter
+    - _target_: langchain_text_splitters.RecursiveCharacterTextSplitter.from_tiktoken_encoder
+    chunk_size: 2000
+    chunk_overlap: 0

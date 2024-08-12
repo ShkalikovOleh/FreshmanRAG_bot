@@ -36,8 +36,14 @@ def docs_to_sources_str(documents: List[Document]) -> str:
     idx = 1
     for doc in documents:
         if "is_public" in doc.metadata:
-            source_str = tg_message_to_source_str(doc)
-        elif doc.metadata["source"] in links:
+            link = doc.metadata["source"]
+            if link != "":
+                if link not in links:
+                    source_str = tg_message_to_source_str(doc)
+                    links.add(link)
+                else:
+                    continue
+        elif doc.metadata["source"] not in links:
             links.add(doc.metadata["source"])
             source_str = web_doc_to_source_str(doc)
         else:

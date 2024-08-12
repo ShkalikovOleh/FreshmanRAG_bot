@@ -1,9 +1,11 @@
 import logging
 import os
 from functools import partial
+from typing import Callable, List
 
 import hydra
-from hydra.utils import instantiate
+from hydra.utils import call, instantiate
+from langchain_core.documents import Document
 from langchain_core.runnables import Runnable
 from omegaconf import DictConfig
 from sqlalchemy.orm import sessionmaker
@@ -26,6 +28,7 @@ from bot.handlers.rag import (
     retieve_docs_to_replied,
 )
 from bot.handlers.service import error, help, start, unknown
+from crag.knoweledge.transformations.sequence import TransformationSequence
 from crag.retrievers.base import PipelineRetrieverBase
 
 logging.basicConfig(
@@ -54,34 +57,56 @@ def prepare_rag_based_handlers(graph: Runnable, db_session: sessionmaker):
 def prepare_management_handlers(
     pipe_retriever: PipelineRetrieverBase,
     db_session: sessionmaker,
+    url_loader: Callable[[List[str]], List[Document]],
+    doc_transformator: TransformationSequence,
 ):
     handlers = {}
     handlers["add_fact"] = partial(
-        add_fact, pipe_retriever=pipe_retriever, db_session=db_session
+        add_fact,
+        pipe_retriever=pipe_retriever,
+        db_session=db_session,
+        doc_transformator=doc_transformator,
     )
     handlers["add_fact_from_replied"] = partial(
-        add_fact_from_replied, pipe_retriever=pipe_retriever, db_session=db_session
+        add_fact_from_replied,
+        pipe_retriever=pipe_retriever,
+        db_session=db_session,
+        doc_transformator=doc_transformator,
     )
     handlers["add_facts_from_link"] = partial(
-        add_facts_from_link, pipe_retriever=pipe_retriever, db_session=db_session
+        add_facts_from_link,
+        pipe_retriever=pipe_retriever,
+        db_session=db_session,
+        url_loader=url_loader,
+        doc_transformator=doc_transformator,
+    )
+    handlers["delete_fact"] = partial(
+        delete_fact, pipe_retriever=pipe_retriever, db_session=db_session
     )
     handlers["ban_user"] = partial(ban_user, db_session=db_session)
     handlers["unban_user"] = partial(unban_user, db_session=db_session)
     handlers["add_admin"] = partial(add_admin, db_session=db_session)
-    handlers["delete_fact"] = partial(
-        delete_fact, pipe_retriever=pipe_retriever, db_session=db_session
-    )
 
     return handlers
 
 
-@hydra.main(version_base="1.3", config_path="../configs", config_name="default")
-def main(config: DictConfig) -> None:
+def prepare_handlers(config: DictConfig):
     db_session = get_db_sessionmaker(config["bot_db_connection"])
     pipeline = instantiate(config["pipeline"])
+    url_loader = call(config["knoweledge"]["loader"])
+    doc_transformator = call(config["knoweledge"]["transform"])
 
     rag_handlers = prepare_rag_based_handlers(pipeline.graph, db_session)
-    manag_handlers = prepare_management_handlers(pipeline.pipe_retriever, db_session)
+    manag_handlers = prepare_management_handlers(
+        pipeline.pipe_retriever, db_session, url_loader, doc_transformator
+    )
+
+    return rag_handlers, manag_handlers
+
+
+@hydra.main(version_base="1.3", config_path="../configs", config_name="default")
+def main(config: DictConfig) -> None:
+    rag_handlers, manag_handlers = prepare_handlers(config)
 
     tgbot_token = os.getenv("TGBOT_TOKEN")
     application = ApplicationBuilder().token(tgbot_token).build()

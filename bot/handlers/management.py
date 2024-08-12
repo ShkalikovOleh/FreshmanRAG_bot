@@ -1,3 +1,5 @@
+from typing import Callable, List
+
 from langchain_core.documents import Document
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,7 +9,7 @@ from telegram.ext import ContextTypes
 from bot.db import Admin, BannedUserOrChat
 from bot.decorators import admin_only, with_db_session
 from bot.utils import remove_bot_command
-from crag.knoweledge.load_telegraph_guides import load_telegraph_guides
+from crag.knoweledge.transformations.sequence import TransformationSequence
 from crag.retrievers.base import PipelineRetrieverBase
 
 
@@ -17,6 +19,7 @@ async def add_fact(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
     pipe_retriever: PipelineRetrieverBase,
+    doc_transformator: TransformationSequence,
     **kwargs,
 ):
     info = remove_bot_command(update.effective_message.text, "add", context.bot.name)
@@ -45,12 +48,13 @@ async def add_fact(
             "title": title,
         },
     )
-    ids = await pipe_retriever.aadd_documents([doc])
+    prepared_docs = doc_transformator.apply([doc])
+    ids = await pipe_retriever.aadd_documents(prepared_docs)
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         reply_to_message_id=update.effective_message.id,
-        text=f"Інформацію успішно додано до бази знань з id: {ids[0]}",
+        text=f"Інформацію успішно додано до бази знань з id: {ids}",
     )
 
 
@@ -60,6 +64,7 @@ async def add_fact_from_replied(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
     pipe_retriever: PipelineRetrieverBase,
+    doc_transformator: TransformationSequence,
     **kwargs,
 ):
     info = remove_bot_command(
@@ -92,12 +97,13 @@ async def add_fact_from_replied(
             "title": title,
         },
     )
-    ids = await pipe_retriever.aadd_documents([doc])
+    prepared_docs = doc_transformator.apply([doc])
+    ids = await pipe_retriever.aadd_documents(prepared_docs)
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         reply_to_message_id=update.effective_message.id,
-        text=f"Інформацію успішно додано до бази знань з id: {ids[0]}",
+        text=f"Інформацію успішно додано до бази знань з id: {ids}",
     )
 
 
@@ -146,6 +152,8 @@ async def add_facts_from_link(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
     pipe_retriever: PipelineRetrieverBase,
+    url_loader: Callable[[List[str]], List[Document]],
+    doc_transformator: TransformationSequence,
     **kwargs,
 ):
     if len(context.args) != 1:
@@ -157,13 +165,14 @@ async def add_facts_from_link(
         return
 
     url = context.args[0]
-    docs = load_telegraph_guides([url], False)
-    await pipe_retriever.aadd_documents(docs)
+    docs = url_loader([url])
+    docs = doc_transformator.apply(docs)
+    ids = await pipe_retriever.aadd_documents(docs)
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         reply_to_message_id=update.effective_message.id,
-        text="Інформацію успішно додано до бази знань.",
+        text=f"Інформацію успішно додано до бази знань з id: {ids}",
     )
 
 

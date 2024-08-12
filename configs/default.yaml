@@ -4,5 +4,7 @@ defaults:
   - llm: gemma2_2b_it
   - prompts: gemma2
   - pipeline: rag_with_question_rewriting
+  - knoweledge/loader: webloader
+  - knoweledge/transform: recursive_character_splitter
 
 bot_db_connection: "postgresql+psycopg://${oc.env:POSTGRES_USER}:${oc.env:POSTGRES_PASSWORD}@${oc.env:POSTGRES_HOST}:5432/${oc.env:POSTGRES_DB}"
