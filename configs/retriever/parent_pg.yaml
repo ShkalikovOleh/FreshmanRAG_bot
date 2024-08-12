@@ -10,6 +10,8 @@ docstore:
   async_mode: True
 child_splitter:
   _target_: langchain_text_splitters.RecursiveCharacterTextSplitter.from_tiktoken_encoder
-  chunk_size: 300
-  chunk_overlap: 10
+  chunk_size: 250
+  chunk_overlap: 0
   separators: ["\n\n", "\n", ".", ";", "!", "?"]
+search_kwargs:
+  k: 2

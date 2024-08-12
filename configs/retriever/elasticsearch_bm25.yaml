@@ -5,3 +5,5 @@ vector_store:
   es_url: http://${oc.env:ELASTIC_HOST}:9200
   strategy:
     _target_: langchain_elasticsearch.BM25Strategy
+search_kwargs:
+  k: 2

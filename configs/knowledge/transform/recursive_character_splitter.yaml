@@ -3,5 +3,5 @@ transforms:
   -
     - text_splitter
     - _target_: langchain_text_splitters.RecursiveCharacterTextSplitter.from_tiktoken_encoder
-      chunk_size: 2000
+      chunk_size: 1000
       chunk_overlap: 0
