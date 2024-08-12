@@ -1,4 +1,4 @@
-_target_: crag.knoweledge.transformations.sequence.TransformationSequence
+_target_: crag.knowledge.transformations.sequence.TransformationSequence
 transforms:
   -
     - text_splitter

@@ -1,2 +1,2 @@
-_target_: crag.knoweledge.loaders.raw_html_loader.load
+_target_: crag.knowledge.loaders.raw_html_loader.load
 _partial_: True

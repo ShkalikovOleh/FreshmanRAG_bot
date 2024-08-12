@@ -1,4 +1,4 @@
-_target_: crag.knoweledge.transformations.sequence.TransformationSequence
+_target_: crag.knowledge.transformations.sequence.TransformationSequence
 transforms: langchain_text_splitters.HTMLSectionSplitter
   -
     - text_splitter
@@ -9,7 +9,7 @@ transforms: langchain_text_splitters.HTMLSectionSplitter
       - ["h3", "Header 3"],
   -
     - function
-    - _target_: crag.knoweledge.transformations.filter_telegram_headers.filter_telegram_headers
+    - _target_: crag.knowledge.transformations.filter_telegram_headers.filter_telegram_headers
     _partial_: True
   -
     - text_splitter

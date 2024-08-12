@@ -9,7 +9,7 @@ from telegram.ext import ContextTypes
 from bot.db import Admin, BannedUserOrChat
 from bot.decorators import admin_only, with_db_session
 from bot.utils import remove_bot_command
-from crag.knoweledge.transformations.sequence import TransformationSequence
+from crag.knowledge.transformations.sequence import TransformationSequence
 from crag.retrievers.base import PipelineRetrieverBase
 
 

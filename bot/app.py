@@ -28,7 +28,7 @@ from bot.handlers.rag import (
     retieve_docs_to_replied,
 )
 from bot.handlers.service import error, help, start, unknown
-from crag.knoweledge.transformations.sequence import TransformationSequence
+from crag.knowledge.transformations.sequence import TransformationSequence
 from crag.retrievers.base import PipelineRetrieverBase
 
 logging.basicConfig(
@@ -93,8 +93,8 @@ def prepare_management_handlers(
 def prepare_handlers(config: DictConfig):
     db_session = get_db_sessionmaker(config["bot_db_connection"])
     pipeline = instantiate(config["pipeline"])
-    url_loader = call(config["knoweledge"]["loader"])
-    doc_transformator = call(config["knoweledge"]["transform"])
+    url_loader = call(config["knowledge"]["loader"])
+    doc_transformator = call(config["knowledge"]["transform"])
 
     rag_handlers = prepare_rag_based_handlers(pipeline.graph, db_session)
     manag_handlers = prepare_management_handlers(
