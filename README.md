@@ -59,12 +59,12 @@ The overall structure of the configs is the following:
     - transform - utility for pre-processing documents before uploading to a vector/elasticsearch store
 
 ## How to deploy
-The easiest way to deploy the bot is to:
+The easiest way to deploy the bot is to (**target CPU must support all instruction sets that GitHub Actions runner support**):
 1. Download a release docker-compose file and optionally required scripts from the [init_scripts](./init_scripts/) directory
 ```
 wget https://raw.githubusercontent.com/ShkalikovOleh/FreshmanRAG_bot/master/docker-compose.release.yml
 ```
-2. Load all desired models (please use scripts from [init_scripts](./init_scripts/)) into the `.models` directory and optionally place your own configs in the `configs` directory.
+2. Load all desired models (please use scripts from [init_scripts](./init_scripts/)) into the `.models` directory.
 3. Place `.env` file with your api keys and other variables (as in the [example.env](./example.env)) in the repo directory
 4. Prepare directories for mounting volumes via
 ```
@@ -73,4 +73,9 @@ bash init_scripts/prepare_data_volumes.sh
 5. Run with docker-compose
 ```
 docker compose -f docker-compose.release.yml up -d
+```
+
+Alternatively, you can clone the repo and build docker container on your target machine. Then please use the following command:
+```
+docker compose -f docker-compose.yml up -d
 ```

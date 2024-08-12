@@ -181,3 +181,6 @@ local.env
 
 # Hydra logs
 outputs
+
+# Prod envs
+prod.env
