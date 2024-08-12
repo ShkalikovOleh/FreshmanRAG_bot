@@ -39,6 +39,8 @@ This bot is currently using Gemma2-2B-it (Q5-K quantized) as an LLM. This is due
 
 If I have time, I plan to fine-tune Gemma2-2B-it for better understanding of Ukrainian (including expanding the tokenizer dictionary) and especially for RAG. You will find corresponding training script in the [llms](./llms/) directory.
 
+Optionally you can use OpenAI models, please specify your `OPENAI_API_KEY` in the .env file and change the llm config.
+
 ## Retrievers
 We support a variety of different retriever types, such as
 - Dense vector retrievers using the Sentence BERT model [*lang-uk/ukr-paraphrase-multilingual-mpnet-base*](https://huggingface.co/lang-uk/ukr-paraphrase-multilingual-mpnet-base) to extract embeddings and `pgvector` as a vector store.
