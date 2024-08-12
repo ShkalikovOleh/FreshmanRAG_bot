@@ -1,0 +1,58 @@
+version: '3.4'
+
+services:
+  freshmanragbot:
+    image: ghcr.io/shkalikovoleh/freshmanrag_bot:latest
+    restart: always
+    depends_on:
+      - db
+      - elasticsearch
+    networks:
+      - bot-network
+    volumes:
+      - ${PWD}/.models/:/app/.models
+      - ${PWD}/configs/:/app/configs
+    env_file:
+      - .env
+  db:
+    image: pgvector/pgvector:pg16
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - bot-network
+    volumes:
+      - ${PWD}/data/db-data/:/var/lib/postgresql/data/
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    ports:
+      - 15433:80
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - bot-network
+    volumes:
+      - ${PWD}/data/pgadmin-data/:/var/lib/pgadmin/
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.1
+    restart: always
+    networks:
+      - bot-network
+    volumes:
+      - ${PWD}/data/es_data:/usr/share/elasticsearch/data
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - cluster.routing.allocation.disk.threshold_enabled=false
+    deploy:
+      resources:
+        limits:
+          memory: 1GB
+
+networks:
+  bot-network:
+    driver: bridge
