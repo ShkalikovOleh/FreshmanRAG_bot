@@ -40,24 +40,23 @@ This bot is currently using Gemma2-2B-it (Q5-K quantized) as an LLM. This is due
 If I have time, I plan to fine-tune Gemma2-2B-it for better understanding of Ukrainian (including expanding the tokenizer dictionary) and especially for RAG. You will find corresponding training script in the [llms](./llms/) directory.
 
 ## Retrievers
-We support a plenty of different retriever types such as:
-- Dense vector retriever with Sentence-BERT model [*lang-uk/ukr-paraphrase-multilingual-mpnet-base*](https://huggingface.co/lang-uk/ukr-paraphrase-multilingual-mpnet-base) to extract embeddings and `pgvector` as a vector store
-- Parent document retriever that use dense vector retriever to find a relevant small document (since it is easy to make a search query), but passes all parent document as a context to a LLM in order to not lose any relevant information
-- BM25 sparse retriever that uses Elasticsearch as a store and allows us to perform sparse search (find keywords)
-- [**Default**] Ensemble retriever fuses the results from the parent document retriever and BM25 retriever to provide the most relevant information and use all
-advantages of both of them.
+We support a variety of different retriever types, such as
+- Dense vector retrievers using the Sentence BERT model [*lang-uk/ukr-paraphrase-multilingual-mpnet-base*](https://huggingface.co/lang-uk/ukr-paraphrase-multilingual-mpnet-base) to extract embeddings and `pgvector` as a vector store.
+- Parent document retriever, which uses a dense vector retriever to find a relevant small document (since it is easy to make a search query), but passes all parent documents as context to an LLM so as not to lose relevant information.
+- BM25 Sparse Retriever, which uses Elasticsearch as a store and allows us to do sparse searches (find keywords) using MB25 algorithm.
+- [**Default**] Ensemble retriever fuses (using the Reciprocal Rank Fusion algorithm) the results from the parent document retriever and the BM25 retriever to find the most relevant information and take advantage of all the of both.
 
 ## Configuration
-To configure the bot I use reliable and flexible tool called Hydra. In the [configs](./configs/) directory you can find and add your own configs. Please read the [docs](https://hydra.cc/docs/1.3/intro/) to properly to do it. By default (and especially inside docker container) bot load default config, so one has to not just add new configurations but also appropriately change [default.yaml](./configs/default.yaml).
+To configure the bot I use a reliable and flexible tool called Hydra. In the [configs](./configs/) directory you can find and add your own configs. Please read the [docs](https://hydra.cc/docs/1.3/intro/) to learn how to do it properly. By default (and especially inside a docker container), the bot will load the default config, so in addition to adding new configs, user will also need to modify the [default.yaml](./configs/default.yaml).
 
 The overall structure of the configs is the following:
-- llm - Language model config
-- retriever - Retriever config
-- prompts - Prompts that use to query a language model
+- llm - language model config
+- retriever - retriever config
+- prompts - prompts used  to query a language model
 - pipeline - RAG pipeline config
 - knowledge
-    - loader - Utility to load and form a document from a provided URL
-    - transform - Utility to preprocess documents before uploading to a vector/elasticsearch store
+    - loader - utility for loading documents from given URLs
+    - transform - utility for pre-processing documents before uploading to a vector/elasticsearch store
 
 ## How to deploy
 The easiest way to deploy the bot is to:
