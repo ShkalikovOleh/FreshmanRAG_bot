@@ -1,5 +1,3 @@
-version: '3.4'
-
 services:
   freshmanragbot:
     image: ghcr.io/shkalikovoleh/freshmanrag_bot:latest
