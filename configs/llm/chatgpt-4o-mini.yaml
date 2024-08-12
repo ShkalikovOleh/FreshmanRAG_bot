@@ -1,0 +1,5 @@
+_target_: langchain_openai.ChatOpenAI
+model_name: gpt-4o-mini
+temperature: 0
+max_tokens: 600
+request_timeout: 120

@@ -1,11 +1,19 @@
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
+from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
 
 from crag.pipelines.base import SimpleRagGraphState, giveup
 from crag.pipelines.simple_rag import SimpleRAG
 from crag.retrievers.base import PipelineRetrieverBase
+
+
+class DocumentGradingResult(BaseModel):
+    score: int = Field(
+        description="Whether given document is relevant to a question or not"
+    )
 
 
 class RAGWithDocsFiltering(SimpleRAG):
@@ -18,7 +26,14 @@ class RAGWithDocsFiltering(SimpleRAG):
         gradining_prompt: PromptTemplate,
     ) -> None:
         super().__init__(retriever, llm, rag_prompt)
-        self._grade_chain = gradining_prompt | llm | JsonOutputParser()
+
+        if isinstance(llm, ChatOpenAI):
+            structured_llm = llm.with_structured_output(
+                DocumentGradingResult, method="json_mode"
+            )
+            self._grade_chain = gradining_prompt | structured_llm
+        else:
+            self._grade_chain = gradining_prompt | llm | JsonOutputParser()
 
     async def grade_documents(self, state: SimpleRagGraphState) -> SimpleRagGraphState:
         question = state["question"]
@@ -29,7 +44,15 @@ class RAGWithDocsFiltering(SimpleRAG):
             result = await self._grade_chain.ainvoke(
                 {"document": doc.page_content, "question": question}
             )
-            if (isinstance(result, dict) and result["score"]) or result == 1:
+
+            # consider ill formed output as a bad score
+            if not isinstance(result, DocumentGradingResult):
+                if not isinstance(result, dict) or "score" not in result:
+                    continue
+                else:
+                    result = DocumentGradingResult(score=result["score"])
+
+            if result.score:
                 relevant_docs.append(doc)
 
         state["documents"] = relevant_docs
