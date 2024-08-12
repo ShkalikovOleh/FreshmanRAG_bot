@@ -40,10 +40,24 @@ This bot is currently using Gemma2-2B-it (Q5-K quantized) as an LLM. This is due
 If I have time, I plan to fine-tune Gemma2-2B-it for better understanding of Ukrainian (including expanding the tokenizer dictionary) and especially for RAG. You will find corresponding training script in the [llms](./llms/) directory.
 
 ## Retrievers
-By default we use dense vector retriever with Sentence-BERT model [*lang-uk/ukr-paraphrase-multilingual-mpnet-base*](https://huggingface.co/lang-uk/ukr-paraphrase-multilingual-mpnet-base) to extract embeddings and `pgvector` as a vector store.
+We support a plenty of different retriever types such as:
+- Dense vector retriever with Sentence-BERT model [*lang-uk/ukr-paraphrase-multilingual-mpnet-base*](https://huggingface.co/lang-uk/ukr-paraphrase-multilingual-mpnet-base) to extract embeddings and `pgvector` as a vector store
+- Parent document retriever that use dense vector retriever to find a relevant small document (since it is easy to make a search query), but passes all parent document as a context to a LLM in order to not lose any relevant information
+- BM25 sparse retriever that uses Elasticsearch as a store and allows us to perform sparse search (find keywords)
+- [**Default**] Ensemble retriever fuses the results from the parent document retriever and BM25 retriever to provide the most relevant information and use all
+advantages of both of them.
 
 ## Configuration
 To configure the bot I use reliable and flexible tool called Hydra. In the [configs](./configs/) directory you can find and add your own configs. Please read the [docs](https://hydra.cc/docs/1.3/intro/) to properly to do it. By default (and especially inside docker container) bot load default config, so one has to not just add new configurations but also appropriately change [default.yaml](./configs/default.yaml).
+
+The overall structure of the configs is the following:
+- llm - Language model config
+- retriever - Retriever config
+- prompts - Prompts that use to query a language model
+- pipeline - RAG pipeline config
+- knowledge
+    - loader - Utility to load and form a document from a provided URL
+    - transform - Utility to preprocess documents before uploading to a vector/elasticsearch store
 
 ## How to deploy
 The easiest way to deploy the bot is to:
