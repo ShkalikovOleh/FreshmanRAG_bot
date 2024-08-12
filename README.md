@@ -72,5 +72,5 @@ bash init_scripts/prepare_data_volumes.sh
 ```
 5. Run with docker-compose
 ```
-docker compose up -d
+docker compose -f docker-compose.release.yml up -d
 ```
