@@ -43,6 +43,8 @@ def docs_to_sources_str(documents: List[Document]) -> str:
                     links.add(link)
                 else:
                     continue
+            else:
+                source_str = tg_message_to_source_str(doc)
         elif doc.metadata["source"] not in links:
             links.add(doc.metadata["source"])
             source_str = web_doc_to_source_str(doc)

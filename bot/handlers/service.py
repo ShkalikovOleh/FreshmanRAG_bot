@@ -34,5 +34,4 @@ async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # do nothing as for now
-    pass
+    print(context.error)
