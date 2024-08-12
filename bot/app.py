@@ -9,6 +9,7 @@ from langchain_core.documents import Document
 from langchain_core.runnables import Runnable
 from omegaconf import DictConfig
 from sqlalchemy.orm import sessionmaker
+from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 
 from bot.db import get_db_sessionmaker
@@ -160,7 +161,7 @@ def main(config: DictConfig) -> None:
 
     application.add_error_handler(error)
 
-    application.run_polling()
+    application.run_polling(allowed_updates=Update.MESSAGE)
 
 
 if __name__ == "__main__":
