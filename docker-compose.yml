@@ -30,7 +30,7 @@ services:
     image: dpage/pgadmin4
     restart: always
     ports:
-      - 15433:80
+      - 127.0.0.1:15433:80
     env_file:
       - .env
     depends_on:
