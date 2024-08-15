@@ -34,7 +34,7 @@ from bot.handlers.rag import (
     retieve_docs,
     retieve_docs_to_replied,
 )
-from bot.handlers.service import error, help, reaction, start, unknown
+from bot.handlers.service import error, help, ignore, reaction, start, unknown
 from crag.knowledge.transformations.sequence import TransformationSequence
 from crag.retrievers.base import PipelineRetrieverBase
 
@@ -121,6 +121,7 @@ def main(config: DictConfig) -> None:
     start_handler = CommandHandler("start", start)
     help_handler = CommandHandler("help", help)
     reaction_handler = MessageReactionHandler(reaction)
+    edited_message_handler = MessageHandler(filters.UpdateType.EDITED_MESSAGE, ignore)
 
     answer_handler = CommandHandler("ans", rag_handlers["answer"])
     answer_to_replied_handler = CommandHandler(
@@ -153,6 +154,7 @@ def main(config: DictConfig) -> None:
     application.add_handler(start_handler)
     application.add_handler(help_handler)
     application.add_handler(reaction_handler)
+    application.add_handler(edited_message_handler)
     application.add_handler(answer_handler)
     application.add_handler(answer_to_replied_handler)
     application.add_handler(retieve_docs_handler)

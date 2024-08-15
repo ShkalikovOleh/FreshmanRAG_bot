@@ -1,4 +1,5 @@
 from telegram import Update
+from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 
@@ -34,7 +35,7 @@ async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def reaction(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Sometimes telegram sends message_reaction updates even though the bot asks only
+    """Sometimes Telegram sends message_reaction updates even though the bot asks only
     for message updates. This handler prevents bot to answer twice the same message
     """
     await context.bot.send_message(
@@ -42,9 +43,18 @@ async def reaction(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_to_message_id=update.effective_message.id,
         text=(
             "Замість того, щоб ставити реакції,"
-            " краще б зірочку на GitHub поставили :)",
+            " краще б зірочку на GitHub поставили :)"
         ),
+        parse_mode=ParseMode.HTML,
     )
+
+
+async def ignore(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Sometimes Telegram sends edited_message updates on simple message reactions
+    that cause running all RAG pipeline once again. This handler just ignores all
+    edited_message updates
+    """
+    pass
 
 
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
