@@ -182,7 +182,7 @@ async def get_user_id_from_message(
     banned_user_id = None
     if 1 <= len(context.args) <= max_args:
         id = context.args[0]
-        if id.isdigit():
+        if id.lstrip("-").isdigit():
             banned_user_id = int(id)
     else:
         reply = update.effective_message.reply_to_message

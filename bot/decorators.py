@@ -63,8 +63,9 @@ def filter_banned(session_param_name="db_session"):
                 banned_chat_query = (
                     select(BannedUserOrChat)
                     .where(BannedUserOrChat.tg_id == update.effective_chat.id)
-                    .where(not BannedUserOrChat.is_user)
+                    .where(BannedUserOrChat.is_user == False)  # noqa
                 )
+                print(banned_chat_query.compile())
                 banned_chat = await session.scalar(banned_chat_query)
                 if banned_chat is not None:
                     return
