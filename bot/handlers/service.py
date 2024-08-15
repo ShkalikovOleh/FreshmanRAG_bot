@@ -33,5 +33,19 @@ async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def reaction(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Sometimes telegram sends message_reaction updates even though the bot asks only
+    for message updates. This handler prevents bot to answer twice the same message
+    """
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        reply_to_message_id=update.effective_message.id,
+        text=(
+            "Замість того, щоб ставити реакції,"
+            " краще б зірочку на GitHub поставили :)",
+        ),
+    )
+
+
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(context.error)

@@ -10,7 +10,13 @@ from langchain_core.runnables import Runnable
 from omegaconf import DictConfig
 from sqlalchemy.orm import sessionmaker
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    MessageReactionHandler,
+    filters,
+)
 
 from bot.db import get_db_sessionmaker
 from bot.handlers.management import (
@@ -28,7 +34,7 @@ from bot.handlers.rag import (
     retieve_docs,
     retieve_docs_to_replied,
 )
-from bot.handlers.service import error, help, start, unknown
+from bot.handlers.service import error, help, reaction, start, unknown
 from crag.knowledge.transformations.sequence import TransformationSequence
 from crag.retrievers.base import PipelineRetrieverBase
 
@@ -114,6 +120,7 @@ def main(config: DictConfig) -> None:
 
     start_handler = CommandHandler("start", start)
     help_handler = CommandHandler("help", help)
+    reaction_handler = MessageReactionHandler(reaction)
 
     answer_handler = CommandHandler("ans", rag_handlers["answer"])
     answer_to_replied_handler = CommandHandler(
@@ -145,6 +152,7 @@ def main(config: DictConfig) -> None:
 
     application.add_handler(start_handler)
     application.add_handler(help_handler)
+    application.add_handler(reaction_handler)
     application.add_handler(answer_handler)
     application.add_handler(answer_to_replied_handler)
     application.add_handler(retieve_docs_handler)
