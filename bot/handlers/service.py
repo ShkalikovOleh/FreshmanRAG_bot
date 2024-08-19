@@ -51,7 +51,7 @@ async def reaction(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def ignore(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Sometimes Telegram sends edited_message updates on simple message reactions
-    that cause running all RAG pipeline once again. This handler just ignores all
+    that cause running the whole RAG pipeline once again. This handler just ignores all
     edited_message updates
     """
     pass

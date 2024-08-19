@@ -151,10 +151,10 @@ def main(config: DictConfig) -> None:
 
     unknown_handler = MessageHandler(filters.COMMAND, unknown)
 
+    application.add_handler(edited_message_handler)
     application.add_handler(start_handler)
     application.add_handler(help_handler)
     application.add_handler(reaction_handler)
-    application.add_handler(edited_message_handler)
     application.add_handler(answer_handler)
     application.add_handler(answer_to_replied_handler)
     application.add_handler(retieve_docs_handler)
