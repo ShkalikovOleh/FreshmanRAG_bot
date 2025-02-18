@@ -25,16 +25,19 @@ Currently, three distinct RAG pipelines are implemented. By default, the bot use
 #### Simple RAG
 
 The `Simple RAG` pipeline uses a [retriever](#retrievers) to find relevant documents from the knowledge base, optionally utilizing this information for answer generation.
+
 ![Simple RAG](assets/simple_rag.png)
 
 #### Conditional RAG with Document Filtering
 
 This pipeline expands on the `Simple RAG` by adding a step to filter out documents irrelevant to the question. If all documents are filtered out, a message is generated (`giveup` node) indicating no relevant document is available. It currently uses an LLM with a special prompt for document grading, though contributions for encoder-only models for filtering are welcome.
+
 ![Conditional RAG with filtering](assets/rag_with_filtering.png)
 
 #### Conditional RAG with Question Rewriting
 
 The `Conditional RAG with Question Rewriting` takes a further step if the documents are filtered out. Instead of giving up, it attempts to rephrase the question (within a set limit) and uses the rewritten query for a new search and answering process.
+
 ![Conditional RAG with question rewriting](assets/rag_with_question_rewriting.png)
 
 ## Language Learning Models (LLMs)
