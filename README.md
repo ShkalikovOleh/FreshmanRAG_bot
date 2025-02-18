@@ -1,64 +1,67 @@
 # FreshmanRAG_bot
-Ukrainian Telegram bot assistant for freshmen based on RAG with LLM.
+FreshmanRAG_bot is a Ukrainian Telegram bot designed to assist first-year students by providing answers to frequently asked questions using Retrieval-Augmented Generation (RAG) with a Language Learning Model (LLM). Freshmen often have numerous questions, but they tend to ignore pinned messages and guides. This leads to repeated inquiries, making it challenging for volunteers to answer each of them. The bot aims to alleviate this burden by autonomously delivering answers or directing users to relevant links.
 
-Very often, first-year students have a lot of questions. But, unfortunately, they flatly refuse to read the pinned messages and guides. This forces us, those who help them, to answer the same questions many times. This bot aims to make the life of volunteers easier by independently providing answers or relevant links to common questions.
-
-## Bot functionality
+## Bot Functionality
 
 ### Commands
-There are two categories of bot commands: user commands and admin commands. Admin commands implements actions such as banning users, adding information to the knowledge base, appending public links to private messages, etc. These commands can be found in the [management](./bot/handlers/management.py) handlers. User commands are intended for the bot’s users (freshmen) and they are the following:
-+ **/docs \<query\>** - return documents/facts relevant to the query
-+ **/docs_rep** - return documents/facts relevant to the query from a replied message
-+ **/ans \<question\>** - answer a question using RAG
-+ **/ans_rep** - answer a question from a replied message using RAG
-+ **/help** - show user's commands description
-+ **/start** - show welcome message
 
-### RAG pipeline types
-Currently 3 different RAG pipelines are implemented. By default the bot uses the *Conditional RAG with question rewriting* pipeline, but you can change in the [configs](#configuration).
+The bot has two categories of commands: user commands and admin commands. 
 
-All pipelines support the ability to return only documents relevant to a question without LLM answer generation, it is implemented as a conditional edge which is depicted as `stop` on all diagrams below.
+Admin commands enable actions like banning users, adding information to the knowledge base, and appending public links to private messages. These can be found in the [management handlers](./bot/handlers/management.py).
+
+User commands are tailored for the students (freshmen) and include:
+
+- **/docs <question>** - Returns documents or facts relevant to the query.
+- **/docs_rep** - Retrieves documents or facts relevant to a query from a replied message.
+- **/ans <question>** - Provides an answer to a question using RAG.
+- **/ans_rep** - Answers a question from a replied message using RAG.
+- **/help** - Displays a description of user commands.
+- **/start** - Shows a welcome message.
+
+### RAG Pipeline Types
+
+Currently, three distinct RAG pipelines are implemented. By default, the bot uses the **Conditional RAG with Question Rewriting** pipeline. You can change this in the [configuration settings](#configuration). All pipelines support the option to return only documents relevant to a question without generating an LLM answer, depicted as a `stop` edge in all the diagrams below.
 
 #### Simple RAG
-The `Simple RAG` pipeline that uses the provided [retriever](#retrievers) to find the relevant documents from the knowledge base and then optionally use this information for generation.
 
+The `Simple RAG` pipeline uses a [retriever](#retrievers) to find relevant documents from the knowledge base, optionally utilizing this information for answer generation.
 ![Simple RAG](assets/simple_rag.png)
 
-#### Conditional RAG with document filtering
-The `Conditional RAG with document filtering` pipeline adds an extra step to the `Simple RAG` that aims to filter out all documents irrelevant to a question. If all documents have been filtered out the pipeline generates a message (`giveup` node) that there is no relevant document in the knowledge base. As of now it uses a LLM with a special prompt to grade documents, but I am open to PRs that will add an encoder only model for filtering (as a sentence classification task).
+#### Conditional RAG with Document Filtering
 
-![Conditional RAG with document filtering](assets/rag_with_filtering.png)
+This pipeline expands on the `Simple RAG` by adding a step to filter out documents irrelevant to the question. If all documents are filtered out, a message is generated (`giveup` node) indicating no relevant document is available. It currently uses an LLM with a special prompt for document grading, though contributions for encoder-only models for filtering are welcome.
+![Conditional RAG with filtering](assets/rag_with_filtering.png)
 
-#### Conditional RAG with question rewriting
-The `Conditional RAG with document filtering pipeline` doesn’t give up immediately. Instead, it attempts to rephrase the question (up to a specified number of times) and uses the rewritten query for next iteration of document search and question answering.
+#### Conditional RAG with Question Rewriting
 
+The `Conditional RAG with Question Rewriting` takes a further step if the documents are filtered out. Instead of giving up, it attempts to rephrase the question (within a set limit) and uses the rewritten query for a new search and answering process.
 ![Conditional RAG with question rewriting](assets/rag_with_question_rewriting.png)
 
-## LLMs
-This bot is currently using Gemma2-2B-it (Q5-K quantized) as an LLM. This is due to the fact that I do not have money to host large models, let alone one on nodes with GPUs. At the same time, even the smallest LLaMa-3.1-8b quantized into 4 bits takes 1 minute to run with llama.cpp. So I decided to use the new Gemma2-2B-it, which, according to the authors, is the best model in this size, and most importantly, more or less understands Ukrainian.
+## Language Learning Models (LLMs)
 
-If I have time, I plan to fine-tune Gemma2-2B-it for better understanding of Ukrainian (including expanding the tokenizer dictionary) and especially for RAG. You will find corresponding training script in the [llms](./llms/) directory.
+The bot currently uses the Gemma2-2B-it (Q5-K quantized) model as its LLM. This choice stems from limited resources; larger models require hosting and GPU support, which is costly. Even the smallest LLaMa-3.1-8b quantized model takes a minute to run with llama.cpp. Gemma2-2B-it is chosen for its efficiency in size and its reasonable understanding of Ukrainian. Future plans include fine-tuning this model for improved Ukrainian comprehension and RAG capabilities, with scripts available in the [llms directory](./llms/).
 
-Optionally you can use OpenAI models, please specify your `OPENAI_API_KEY` in the .env file and change the llm config.
+Optionally, you can configure the bot to use OpenAI models by inputting your `OPENAI_API_KEY` in the .env file and adjusting the LLM configuration.
 
 ## Retrievers
-We support a variety of different retriever types, such as
-- Dense vector retrievers using the Sentence BERT model [*lang-uk/ukr-paraphrase-multilingual-mpnet-base*](https://huggingface.co/lang-uk/ukr-paraphrase-multilingual-mpnet-base) to extract embeddings and `pgvector` as a vector store.
-- Parent document retriever, which uses a dense vector retriever to find a relevant small document (since it is easy to make a search query), but passes all parent documents as context to an LLM so as not to lose relevant information.
-- BM25 Sparse Retriever, which uses Elasticsearch as a store and allows us to do sparse searches (find keywords) using MB25 algorithm.
-- [**Default**] Ensemble retriever fuses (using the Reciprocal Rank Fusion algorithm) the results from the parent document retriever and the BM25 retriever to find the most relevant information and take advantage of all the of both.
+We support various retriever types:
+
+- Dense vector retrievers using Sentence BERT model [*lang-uk/ukr-paraphrase-multilingual-mpnet-base*](https://huggingface.co/lang-uk/ukr-paraphrase-multilingual-mpnet-base) with `pgvector` as a storage method.
+- Parent document retrievers, which use dense vector retrievers for finding a small relevant document and pass all parent documents as context to an LLM to retain relevant information.
+- BM25 Sparse Retriever, utilizing Elasticsearch for sparse keyword searches using the BM25 algorithm.
+- **Default**: The Ensemble Retriever combines results from the parent document retriever and BM25 retriever using the Reciprocal Rank Fusion algorithm to provide the most relevant information.
 
 ## Configuration
 To configure the bot I use a reliable and flexible tool called Hydra. In the [configs](./configs/) directory you can find and add your own configs. Please read the [docs](https://hydra.cc/docs/1.3/intro/) to learn how to do it properly. By default (and especially inside a docker container), the bot will load the default config, so in addition to adding new configs, user will also need to modify the [default.yaml](./configs/default.yaml).
 
 The overall structure of the configs is the following:
-- llm - language model config
-- retriever - retriever config
-- prompts - prompts used  to query a language model
-- pipeline - RAG pipeline config
-- knowledge
-    - loader - utility for loading documents from given URLs
-    - transform - utility for pre-processing documents before uploading to a vector/elasticsearch store
+- llm: language model configuration
+- retriever: retriever configuration
+- prompts: used to query a language model
+- pipeline: RAG pipeline configuration
+- knowledge: utilities for loading and pre-processing documents
+    - loader: utility for loading documents from given URLs
+    - transform: utility for pre-processing documents before uploading to a vector/elasticsearch store
 
 ## How to deploy
 The easiest way to deploy the bot is to (**target CPU must support all instruction sets that GitHub Actions runner support**):
