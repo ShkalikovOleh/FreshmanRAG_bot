@@ -42,7 +42,7 @@ The `Conditional RAG with Question Rewriting` takes a further step if the docume
 
 ## Language Learning Models (LLMs)
 
-The bot currently uses the Gemma2-2B-it (Q5-K quantized) model as its LLM. This choice stems from limited resources; larger models require hosting and GPU support, which is costly. Even the smallest LLaMa-3.1-8b quantized model takes a minute to run with llama.cpp. Gemma2-2B-it is chosen for its efficiency in size and its reasonable understanding of Ukrainian. Future plans include fine-tuning this model for improved Ukrainian comprehension and RAG capabilities, with scripts available in the [llms directory](./llms/).
+The bot currently uses the Gemma2-2B-it (Q5-K quantized) model as its LLM. This choice stems from limited resources; larger models require hosting on GPU nodes, which is costly. And on CPU even the smallest LLaMa-3.1-8b quantized model takes a minute to run with llama.cpp. That's why Gemma2-2B-it was chosen for its solid performance in the given size and its reasonable understanding of Ukrainian. Future plans include fine-tuning this model for improved Ukrainian comprehension and RAG capabilities, with scripts available in the [llms directory](./llms/).
 
 Optionally, you can configure the bot to use OpenAI models by inputting your `OPENAI_API_KEY` in the .env file and adjusting the LLM configuration.
 
