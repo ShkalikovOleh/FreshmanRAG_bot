@@ -50,8 +50,8 @@ Optionally, you can configure the bot to use OpenAI models by inputting your `OP
 We support various retriever types:
 
 - Dense vector retrievers using Sentence BERT model [*lang-uk/ukr-paraphrase-multilingual-mpnet-base*](https://huggingface.co/lang-uk/ukr-paraphrase-multilingual-mpnet-base) with `pgvector` as a storage method.
-- Parent document retrievers, which use dense vector retrievers for finding a small relevant document and pass all parent documents as context to an LLM to retain relevant information.
-- BM25 Sparse Retriever, utilizing Elasticsearch for sparse keyword searches using the BM25 algorithm.
+- Parent document retrievers, which use dense vector retrievers for finding a small relevant document and pass a full parent document as context to an LLM to retain relevant information.
+- BM25 Sparse Retriever, utilizing `Elasticsearch` for sparse keyword searches using the BM25 algorithm.
 - **Default**: The Ensemble Retriever combines results from the parent document retriever and BM25 retriever using the Reciprocal Rank Fusion algorithm to provide the most relevant information.
 
 ## Configuration
